@@ -4,6 +4,7 @@
 #include <geGL/geGL.h>
 #include <string>
 #include <memory>
+#include "particle.hpp"
 
 class Scene
 {
@@ -44,6 +45,7 @@ class Scene
         std::shared_ptr<ge::gl::Texture> colorTexture;
         std::shared_ptr<ge::gl::Program> geometryProgram;
         std::shared_ptr<ge::gl::Program> displayProgram;
+        std::shared_ptr<ge::gl::Buffer> gParticleSSBO; // Shader Storage Buffer Object for particles
         std::shared_ptr<ge::gl::Buffer> cubeVBO;
         std::shared_ptr<ge::gl::Buffer> planeVBO;
         std::shared_ptr<ge::gl::VertexArray> cubeVAO;
