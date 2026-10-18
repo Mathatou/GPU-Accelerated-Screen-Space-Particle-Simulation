@@ -1,11 +1,16 @@
+#pragma region Includes
 #include "scene.hpp"
 
 #include <iostream>
+#pragma endregion
 
+#pragma region Application State
 int windowWidth = 1024;
 int windowHeight = 768;
 Scene lScene;
+#pragma endregion
 
+#pragma region Event Handling
 void HandleEvent(const SDL_Event& pEvent, bool& running)
 {
     if(pEvent.type == SDL_EVENT_QUIT)
@@ -18,8 +23,9 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
         std::cout << "Escape key pressed. Exiting..." << std::endl;
     }
 }
+#pragma endregion
 
-
+#pragma region Main Loop
 int main()
 {
     SDL_Window* window = nullptr;
@@ -51,3 +57,4 @@ int main()
     lScene.Cleanup(window, context);
     return 0;
 }
+#pragma endregion

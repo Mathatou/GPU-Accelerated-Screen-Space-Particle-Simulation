@@ -1,3 +1,4 @@
+#pragma region Includes
 #include "scene.hpp"
 
 #include <geGL/geGL.h>
@@ -12,11 +13,14 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#pragma endregion
 
-
+#pragma region Namespace Imports
 using namespace ge::gl;
 using namespace std;
+#pragma endregion
 
+#pragma region Scene Lifecycle
 Scene::Scene()
 {
 }
@@ -81,6 +85,8 @@ void Scene::Cleanup(SDL_Window* pWindow, SDL_GLContext pCtx)
     SDL_DestroyWindow(pWindow);
 }
 
+#pragma endregion
+#pragma region Geometry
 void Scene::InitCube()
 {
     // 36 sommets : 3 floats pour la position, 3 floats pour la normale
@@ -167,6 +173,8 @@ void Scene::Draw3DPlane()
     planeVAO->unbind();
 }
 
+/// @brief Draw the 3D scene, including the cube, plane, and particles. 
+/// Updates particle states and resets them if they are no longer alive. 
 void Scene::DrawScene(int windowWidth, int windowHeight)
 {
     glm::mat4 model = glm::rotate(glm::mat4(1.0f),

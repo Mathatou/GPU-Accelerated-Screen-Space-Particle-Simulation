@@ -8,14 +8,32 @@
 class Scene
 {
     public:
+        /// @brief Creates an empty scene.
         Scene();
+
+        /// @brief Creates the SDL window, OpenGL context, framebuffer, and shader programs.
         void Initialise(SDL_Window** pPWindow, SDL_GLContext* pPCtx,
                         int width, int height, const char* title);
+
+        /// @brief Releases the scene graphics resources and destroys the SDL objects.
         void Cleanup(SDL_Window* pWindow, SDL_GLContext pCtx);
+
+        /// @brief Creates the cube vertex and vertex-array objects.
         void InitCube();
+
+        /// @brief Creates the plane vertex and vertex-array objects.
         void InitPlane();
+
+        /// @brief Creates the requested number of particles.
+        void InitParticle(int pNumber);
+
+        /// @brief Draws the cube using its configured vertex array.
         void Draw3DCube();
+
+        /// @brief Draws the plane using its configured vertex array.
         void Draw3DPlane();
+
+        /// @brief Updates particles and renders the complete scene.
         void DrawScene(int windowWidth, int windowHeight);
         
     private:
