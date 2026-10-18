@@ -159,6 +159,58 @@ void Scene::InitPlane()
     planeVAO->addAttrib(planeVBO, 1, 3, GL_FLOAT, 6 * sizeof(float), 3 * sizeof(float));
 }
 
+#pragma endregion
+#pragma region Particles
+/// @brief Initializes a specified number of particles with random properties 
+/// (position, velocity, lifetime, size, color) and adds them to the particle vector. 
+void Scene::InitParticle(int pNumber)
+{
+    if(pNumber <= 0 || pNumber > 1000000) // Limit to 1 million particles for performance
+    {
+        std::cerr << "Invalid number of particles: " << pNumber << ". Must be between 1 and 1,000,000." << std::endl;
+        return;
+    }
+    // Implementation for initializing particles
+    for(int i = 0; i < pNumber; ++i)
+    {
+        glm::vec3 lPosition = glm::vec3(
+            static_cast<float>(rand()) / RAND_MAX * 10.0f - 5.0f,
+            static_cast<float>(rand()) / RAND_MAX * 10.0f - 5.0f,
+            static_cast<float>(rand()) / RAND_MAX * 10.0f - 5.0f);
+        glm::vec3 lVelocity = glm::vec3(
+            static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f,
+            static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f,
+            static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f);
+        float lLifetime = static_cast<float>(rand()) / RAND_MAX * 5.0f + 1.0f; // Lifetime between 1 and 6 seconds
+        float lSize = static_cast<float>(rand()) / RAND_MAX * 0.5f + 0.1f; // Size between 0.1 and 0.6
+        glm::vec4 lColor = glm::vec4(static_cast<float>(rand()) / RAND_MAX,
+            static_cast<float>(rand()) / RAND_MAX,
+            static_cast<float>(rand()) / RAND_MAX, 1.0f); // Random color with full alpha
+        lParticles.push_back(Particle(lPosition, lVelocity, lLifetime, lSize, lColor));
+    }
+}
+
+void Scene::ResetParticle(Particle& pParticle)
+{
+    glm::vec3 lPosition = glm::vec3(
+            static_cast<float>(rand()) / RAND_MAX * 10.0f - 5.0f,
+            static_cast<float>(rand()) / RAND_MAX * 10.0f - 5.0f,
+            static_cast<float>(rand()) / RAND_MAX * 10.0f - 5.0f);
+        glm::vec3 lVelocity = glm::vec3(
+            static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f,
+            static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f,
+            static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f);
+        float lLifetime = static_cast<float>(rand()) / RAND_MAX * 5.0f + 1.0f; // Lifetime between 1 and 6 seconds
+        float lSize = static_cast<float>(rand()) / RAND_MAX * 0.5f + 0.1f; // Size between 0.1 and 0.6
+        glm::vec4 lColor = glm::vec4(static_cast<float>(rand()) / RAND_MAX,
+            static_cast<float>(rand()) / RAND_MAX,
+            static_cast<float>(rand()) / RAND_MAX, 1.0f); // Random color with full alpha
+
+    pParticle = Particle(lPosition, lVelocity, lLifetime, lSize, lColor);
+}
+
+#pragma endregion
+#pragma region Rendering
 void Scene::Draw3DCube()
 {
     cubeVAO->bind();
@@ -209,4 +261,16 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     emptyVAO->bind();
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     emptyVAO->unbind();
+
+    for (int i = 0; i < lParticles.size(); ++i)
+    {
+        auto &particle = lParticles[i];
+        particle.Update(0.016f); // Assuming a frame time of ~16ms (60 FPS)
+        if (!particle.IsAlive())
+        {
+            ResetParticle(particle);
+        }
+    }
+    #pragma endregion
+    
 }

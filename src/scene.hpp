@@ -49,6 +49,11 @@ class Scene
         std::shared_ptr<ge::gl::VertexArray> cubeVAO;
         std::shared_ptr<ge::gl::VertexArray> planeVAO;
         std::shared_ptr<ge::gl::VertexArray> emptyVAO;
+        /// @brief Loads a shader source file from the configured shader directory.
         std::string LoadShader(const std::string& fileName);
+
+        /// @brief Reinitializes a particle after its lifetime expires.
+        void ResetParticle(Particle& pParticle);
+        std::vector<Particle> lParticles; // Vector to hold particles
 
 };
