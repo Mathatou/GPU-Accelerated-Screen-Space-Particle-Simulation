@@ -13,9 +13,9 @@ layout(std430, binding = 0) buffer ParticleBufferData
     Particle particles[];
 };
 
-uniform float uDeltaTime; // Assuming a fixed time step of 16ms (60 FPS)
+layout(location = 0) uniform float uDeltaTime; // Assuming a fixed time step of 16ms (60 FPS)
 
-void Update(float deltaTime, Particle pParticle, uint pIndex)
+void Update(float deltaTime, inout Particle pParticle, uint pIndex)
 {
     float gravity = -9.81f; // Gravity acceleration in m/s^2
     pParticle.velocity_size.y += gravity * deltaTime; // Apply gravity to the y-velocity
@@ -26,12 +26,71 @@ void Update(float deltaTime, Particle pParticle, uint pIndex)
     particles[pIndex] = pParticle;
 }
 
+// A widely used PRNG hash function (PCG or similar integer hash)
+// Hash function from H. Schechter & R. Bridson, goo.gl/RXiKaH
+uint randomInt(inout uint state) {
+    state ^= 2747636419u;
+    state *= 2654435769u;
+    state ^= state >> 16;
+    state *= 2654435769u;
+    state ^= state >> 16;
+    state *= 2654435769u;
+    return state;
+}
+
+// Returns a random float between 0.0 and 1.0
+float randomFloat(inout uint state) {
+    return float(randomInt(state)) / 4294967295.0; // Divide by max uint
+}
+
+// Helper to get a random float within a specific range
+float randomRange(inout uint state, float minVal, float maxVal) {
+    return mix(minVal, maxVal, randomFloat(state));
+}
+
+
+void ResetParticle(inout Particle pParticle, inout uint seed)
+{
+    pParticle.position_lifetime = vec4(
+        randomRange(seed, -5.0, 5.0),  // Random x position between -5 and 5
+        randomRange(seed, -5.0, 5.0),  // Random y position between -5 and 5
+        randomRange(seed, -5.0, 5.0),  // Random z position between -5 and 5
+        1.0                          // Reset lifetime to 1 second
+    );
+
+    pParticle.velocity_size = vec4(
+        randomRange(seed, -1.0, 1.0),  // Random x velocity between -1 and 1
+        randomRange(seed, -1.0, 1.0),  // Random y velocity between -1 and 1
+        randomRange(seed, -1.0, 1.0),  // Random z velocity between -1 and 1
+        randomRange(seed, 0.1, 0.3)    // Random size between 1 and 3
+    );
+
+    pParticle.color = vec4(
+        randomFloat(seed),             // Random red component (0.0 to 1.0)
+        randomFloat(seed),             // Random green component (0.0 to 1.0)
+        randomFloat(seed),             // Random blue component (0.0 to 1.0)
+        1.0                          // Full opacity
+    );
+}
+
+
 void main()
 {
     // Out of bounds, do nothing
     uint index = gl_GlobalInvocationID.x;
-
     if(index >= particles.length()) return;
+
+    highp int intDeltatime = int(uDeltaTime * 1000.0); // Convert delta time to milliseconds
+    uint seed = index * intDeltatime; // Create a seed based on index and delta time
+    randomInt(seed); // Initialize the random number generator with the seed
+
+    
     Particle vParticle = particles[index];
     Update(uDeltaTime, vParticle, index);
+    
+    if(vParticle.position_lifetime.w <= 0.0)
+    {
+        ResetParticle(vParticle, seed);
+    }
+    particles[index] = vParticle;
 }
