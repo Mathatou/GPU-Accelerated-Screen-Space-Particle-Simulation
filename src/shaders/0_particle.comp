@@ -1,0 +1,37 @@
+#version 450
+// Work group size for the compute_shader
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+struct Particle
+{
+    vec4 position_lifetime;
+    vec4 velocity_size;
+    vec4 color; 
+};
+
+layout(std430, binding = 0) buffer ParticleBufferData
+{
+    Particle particles[];
+};
+
+uniform float uDeltaTime; // Assuming a fixed time step of 16ms (60 FPS)
+
+void Update(float deltaTime, Particle pParticle, uint pIndex)
+{
+    float gravity = -9.81f; // Gravity acceleration in m/s^2
+    pParticle.velocity_size.y += gravity * deltaTime; // Apply gravity to the y-velocity
+    pParticle.position_lifetime.x += pParticle.velocity_size.x * deltaTime;
+    pParticle.position_lifetime.y += pParticle.velocity_size.y * deltaTime;
+    pParticle.position_lifetime.z += pParticle.velocity_size.z * deltaTime;
+    pParticle.position_lifetime.w -= deltaTime;
+    particles[pIndex] = pParticle;
+}
+
+void main()
+{
+    // Out of bounds, do nothing
+    uint index = gl_GlobalInvocationID.x;
+
+    if(index >= particles.length()) return;
+    Particle vParticle = particles[index];
+    Update(uDeltaTime, vParticle, index);
+}

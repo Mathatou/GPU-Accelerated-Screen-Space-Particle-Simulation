@@ -68,11 +68,22 @@ void Scene::Initialise(SDL_Window** pPWindow, SDL_GLContext* pPCtx,
 
     geometryProgram = std::make_shared<Program>(
         std::make_shared<Shader>(GL_VERTEX_SHADER, LoadShader("0_geometry.vert")),
-        std::make_shared<Shader>(GL_FRAGMENT_SHADER, LoadShader("0_geometry.frag")));
+        std::make_shared<Shader>(GL_FRAGMENT_SHADER, LoadShader("0_geometry.frag"))
+    );
     displayProgram = std::make_shared<Program>(
         std::make_shared<Shader>(GL_VERTEX_SHADER, LoadShader("0_display.vert")),
-        std::make_shared<Shader>(GL_FRAGMENT_SHADER, LoadShader("0_display.frag")));
+        std::make_shared<Shader>(GL_FRAGMENT_SHADER, LoadShader("0_display.frag"))
+    );
+    computeProgram = std::make_shared<Program>(
+        std::make_shared<Shader>(GL_COMPUTE_SHADER, LoadShader("0_particle.comp"))
+    );
     emptyVAO = std::make_shared<VertexArray>();
+    bIsSceneInitialized = true;
+}
+
+bool Scene::isSceneInitialized() const
+{
+    return bIsSceneInitialized;
 }
 
 void Scene::Cleanup(SDL_Window* pWindow, SDL_GLContext pCtx)
@@ -87,6 +98,7 @@ void Scene::Cleanup(SDL_Window* pWindow, SDL_GLContext pCtx)
 
 #pragma endregion
 #pragma region Geometry
+
 void Scene::InitCube()
 {
     // 36 sommets : 3 floats pour la position, 3 floats pour la normale
@@ -161,6 +173,7 @@ void Scene::InitPlane()
 
 #pragma endregion
 #pragma region Particles
+
 /// @brief Initializes a specified number of particles with random properties 
 /// (position, velocity, lifetime, size, color) and adds them to the particle vector. 
 void Scene::InitParticle(int pNumber)
@@ -188,6 +201,22 @@ void Scene::InitParticle(int pNumber)
             static_cast<float>(rand()) / RAND_MAX, 1.0f); // Random color with full alpha
         lParticles.push_back(Particle(lPosition, lVelocity, lLifetime, lSize, lColor));
     }
+    InitParticleBuffer();
+}
+
+
+void Scene::InitParticleBuffer()
+{
+    if(lParticles.empty())
+    {
+        std::cerr << "No particles to initialize in the buffer." << std::endl;
+        return;
+    }
+
+    // Create a buffer large enough to hold all particles
+    // GL_DYNAMIC_DRAW : The data store contents will be modified repeatedly and used many times. 
+    gParticleSSBO = std::make_shared<Buffer>(lParticles.size() * sizeof(Particle), lParticles.data(), GL_DYNAMIC_DRAW);
+    gParticleSSBO->bindBase(GL_SHADER_STORAGE_BUFFER, 0); // Bind to binding point 0
 }
 
 void Scene::ResetParticle(Particle& pParticle)
@@ -237,8 +266,14 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     const glm::mat4 projection = glm::perspective(glm::radians(45.0f),
         static_cast<float>(windowWidth) / static_cast<float>(windowHeight), 0.1f, 100.0f);
 
+    // ====== PARTICLE COMPUTE PASS ======
+    gParticleSSBO->bindBase(GL_SHADER_STORAGE_BUFFER, 0);
+    glUniform1f(glGetUniformLocation(computeProgram->getId(), "uDeltaTime"), 0.016f); // Assuming a fixed time step of 16ms (60 FPS)
+    computeProgram->use();
+    computeProgram->dispatch(391,1,1);
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // ====== GEOMETRY PASS ======
     geometryBuffer->bind();
     geometryProgram->use();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -253,6 +288,8 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     Draw3DPlane();
     geometryBuffer->unbind();
 
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_FRAMEBUFFER_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
+    // ====== DISPLAY PASS ======
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     displayProgram->use();
     normalTexture->bind(0);
@@ -262,15 +299,15 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     emptyVAO->unbind();
 
-    for (int i = 0; i < lParticles.size(); ++i)
-    {
-        auto &particle = lParticles[i];
-        particle.Update(0.016f); // Assuming a frame time of ~16ms (60 FPS)
-        if (!particle.IsAlive())
-        {
-            ResetParticle(particle);
-        }
-    }
+    // for (int i = 0; i < lParticles.size(); ++i)
+    // {
+    //     auto &particle = lParticles[i];
+    //     particle.Update(0.016f); // Assuming a frame time of ~16ms (60 FPS)
+    //     if (!particle.IsAlive())
+    //     {
+    //         ResetParticle(particle);
+    //     }
+    // }
     #pragma endregion
     
 }

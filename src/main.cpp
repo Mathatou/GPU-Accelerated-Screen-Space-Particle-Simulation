@@ -3,10 +3,18 @@
 
 #include <iostream>
 #pragma endregion
+#define WINDOW_WIDTH 1024
+#define WINDOW_HEIGHT 768
+#define PARTICLE_NUMBER 100000
 
 #pragma region Application State
-int windowWidth = 1024;
-int windowHeight = 768;
+int windowWidth = WINDOW_WIDTH;
+int windowHeight = WINDOW_HEIGHT;
+auto lTimer = SDL_GetPerformanceCounter();
+auto lFrequency = SDL_GetPerformanceFrequency();
+int frameCount = 0;
+float FPS = 0.f;
+bool FPSDebugMode = true;
 Scene lScene;
 #pragma endregion
 
@@ -17,10 +25,15 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
     {
         running = false;
     }
-    else if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_ESCAPE)
+    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_ESCAPE)
     {
         running = false;
         std::cout << "Escape key pressed. Exiting..." << std::endl;
+    }
+    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_F5)
+    {
+        std::cout << "Switching fps counter display mode." << std::endl;
+        FPSDebugMode = !FPSDebugMode;
     }
 }
 #pragma endregion
@@ -30,8 +43,13 @@ int main()
 {
     SDL_Window* window = nullptr;
     SDL_GLContext context = nullptr;
-    
     lScene.Initialise(&window, &context, windowWidth, windowHeight, "Particle Sim");
+    if(!lScene.isSceneInitialized())
+    {
+        std::cerr << "Scene is already initialized. Exiting..." << std::endl;
+        return 1;
+    }
+
     if(window == nullptr || context == nullptr)
     {
         lScene.Cleanup(window, context);
@@ -40,7 +58,7 @@ int main()
 
     lScene.InitCube();
     lScene.InitPlane();
-
+    lScene.InitParticle(PARTICLE_NUMBER); // Initialize 100,000 particles
     bool running = true;
     while(running)
     {
@@ -52,6 +70,22 @@ int main()
             HandleEvent(event, running);
         }
         SDL_GL_SwapWindow(window);
+        
+        #pragma region FPS Calculation
+        if(FPSDebugMode)
+        {
+            frameCount++;
+            auto lCurrentTime = SDL_GetPerformanceCounter();
+            auto lElapsedTime = (lCurrentTime - lTimer) / static_cast<float>(lFrequency);
+            if(lElapsedTime >=1.f)
+            {
+                FPS = frameCount/lElapsedTime;
+                std::cout << "FPS: " << FPS << std::endl; // Multiply by 2 because we measure over 1.0 seconds
+                frameCount = 0;
+                lTimer = lCurrentTime;
+            }
+        }
+        #pragma endregion
     }
 
     lScene.Cleanup(window, context);

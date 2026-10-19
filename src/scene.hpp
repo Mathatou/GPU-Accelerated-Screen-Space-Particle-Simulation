@@ -16,6 +16,9 @@ class Scene
         void Initialise(SDL_Window** pPWindow, SDL_GLContext* pPCtx,
                         int width, int height, const char* title);
 
+        /// @brief Checks if the scene is initialized.
+        bool isSceneInitialized() const;
+        
         /// @brief Releases the scene graphics resources and destroys the SDL objects.
         void Cleanup(SDL_Window* pWindow, SDL_GLContext pCtx);
 
@@ -28,6 +31,9 @@ class Scene
         /// @brief Creates the requested number of particles.
         void InitParticle(int pNumber);
 
+        /// @brief Initializes the shader storage buffer object (SSBO) for particle data.
+        void InitParticleBuffer();
+
         /// @brief Draws the cube using its configured vertex array.
         void Draw3DCube();
 
@@ -36,8 +42,10 @@ class Scene
 
         /// @brief Updates particles and renders the complete scene.
         void DrawScene(int windowWidth, int windowHeight);
-        
+
+
     private:
+        bool bIsSceneInitialized = false;
         const std::string shaderFolder = "../src/shaders/";
         std::shared_ptr<ge::gl::Framebuffer> geometryBuffer;
         std::shared_ptr<ge::gl::Texture> normalTexture;
@@ -45,6 +53,7 @@ class Scene
         std::shared_ptr<ge::gl::Texture> colorTexture;
         std::shared_ptr<ge::gl::Program> geometryProgram;
         std::shared_ptr<ge::gl::Program> displayProgram;
+        std::shared_ptr<ge::gl::Program> computeProgram;
         std::shared_ptr<ge::gl::Buffer> gParticleSSBO; // Shader Storage Buffer Object for particles
         std::shared_ptr<ge::gl::Buffer> cubeVBO;
         std::shared_ptr<ge::gl::Buffer> planeVBO;
