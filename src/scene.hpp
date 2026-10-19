@@ -54,6 +54,7 @@ class Scene
         std::shared_ptr<ge::gl::Program> geometryProgram;
         std::shared_ptr<ge::gl::Program> displayProgram;
         std::shared_ptr<ge::gl::Program> computeProgram;
+        std::shared_ptr<ge::gl::Program> particleProgram;
         std::shared_ptr<ge::gl::Buffer> gParticleSSBO; // Shader Storage Buffer Object for particles
         std::shared_ptr<ge::gl::Buffer> cubeVBO;
         std::shared_ptr<ge::gl::Buffer> planeVBO;
@@ -65,6 +66,10 @@ class Scene
 
         /// @brief Reinitializes a particle after its lifetime expires.
         void ResetParticle(Particle& pParticle);
+        /// @brief Draws the particles in the scene.
+        void DrawParticles(glm::mat4 const& view, 
+            glm::mat4 const& projection,
+            glm::mat4 const& model);
         std::vector<Particle> lParticles; // Vector to hold particles
 
 };

@@ -57,6 +57,7 @@ void Scene::Initialise(SDL_Window** pPWindow, SDL_GLContext* pPCtx,
     
     ge::gl::init();
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_PROGRAM_POINT_SIZE);
 
     colorTexture = std::make_shared<Texture>(GL_TEXTURE_2D, GL_RGBA8, 1, width, height);
     depthTexture = std::make_shared<Texture>(GL_TEXTURE_2D, GL_DEPTH_COMPONENT32, 1, width, height);
@@ -76,6 +77,10 @@ void Scene::Initialise(SDL_Window** pPWindow, SDL_GLContext* pPCtx,
     );
     computeProgram = std::make_shared<Program>(
         std::make_shared<Shader>(GL_COMPUTE_SHADER, LoadShader("0_particle.comp"))
+    );
+    particleProgram = std::make_shared<Program>(
+        std::make_shared<Shader>(GL_VERTEX_SHADER, LoadShader("0_particle.vert")),
+        std::make_shared<Shader>(GL_FRAGMENT_SHADER, LoadShader("0_particle.frag"))
     );
     emptyVAO = std::make_shared<VertexArray>();
     bIsSceneInitialized = true;
@@ -219,25 +224,6 @@ void Scene::InitParticleBuffer()
     gParticleSSBO->bindBase(GL_SHADER_STORAGE_BUFFER, 0); // Bind to binding point 0
 }
 
-void Scene::ResetParticle(Particle& pParticle)
-{
-    glm::vec3 lPosition = glm::vec3(
-            static_cast<float>(rand()) / RAND_MAX * 10.0f - 5.0f,
-            static_cast<float>(rand()) / RAND_MAX * 10.0f - 5.0f,
-            static_cast<float>(rand()) / RAND_MAX * 10.0f - 5.0f);
-        glm::vec3 lVelocity = glm::vec3(
-            static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f,
-            static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f,
-            static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f);
-        float lLifetime = static_cast<float>(rand()) / RAND_MAX * 5.0f + 1.0f; // Lifetime between 1 and 6 seconds
-        float lSize = static_cast<float>(rand()) / RAND_MAX * 0.5f + 0.1f; // Size between 0.1 and 0.6
-        glm::vec4 lColor = glm::vec4(static_cast<float>(rand()) / RAND_MAX,
-            static_cast<float>(rand()) / RAND_MAX,
-            static_cast<float>(rand()) / RAND_MAX, 1.0f); // Random color with full alpha
-
-    pParticle = Particle(lPosition, lVelocity, lLifetime, lSize, lColor);
-}
-
 #pragma endregion
 #pragma region Rendering
 void Scene::Draw3DCube()
@@ -254,6 +240,25 @@ void Scene::Draw3DPlane()
     planeVAO->unbind();
 }
 
+void Scene::DrawParticles(glm::mat4 const& view, 
+    glm::mat4 const& projection,
+    glm::mat4 const& model
+)
+{
+    particleProgram->use();
+    // Set the view matrix for the particle shader
+    // LookAt : Camera -- Center -- Up
+    particleProgram->setMatrix4fv("uView",glm::value_ptr(view));
+    particleProgram->setMatrix4fv("uProjection",glm::value_ptr(projection));
+    particleProgram->setMatrix4fv("uModel",glm::value_ptr(model));
+    glDisable(GL_DEPTH_TEST);
+    emptyVAO->bind();
+    glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(lParticles.size()));
+    emptyVAO->unbind();
+    glEnable(GL_DEPTH_TEST);
+}
+
+
 /// @brief Draw the 3D scene, including the cube, plane, and particles. 
 /// Updates particle states and resets them if they are no longer alive. 
 void Scene::DrawScene(int windowWidth, int windowHeight)
@@ -268,9 +273,11 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
 
     // ====== PARTICLE COMPUTE PASS ======
     gParticleSSBO->bindBase(GL_SHADER_STORAGE_BUFFER, 0);
-    glUniform1f(glGetUniformLocation(computeProgram->getId(), "uDeltaTime"), 0.016f); // Assuming a fixed time step of 16ms (60 FPS)
     computeProgram->use();
-    computeProgram->dispatch(391,1,1);
+    glUniform1f(glGetUniformLocation(computeProgram->getId(), "uDeltaTime"), 0.016f);
+    const GLuint workGroupCount = static_cast<GLuint>((lParticles.size() + 255) / 256);
+    computeProgram->dispatch(workGroupCount, 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // ====== GEOMETRY PASS ======
@@ -288,7 +295,6 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     Draw3DPlane();
     geometryBuffer->unbind();
 
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_FRAMEBUFFER_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
     // ====== DISPLAY PASS ======
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     displayProgram->use();
@@ -298,16 +304,12 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     emptyVAO->bind();
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     emptyVAO->unbind();
+    
+    model = glm::mat4(1.0f);
+    
+    DrawParticles(view, projection, model);
 
-    // for (int i = 0; i < lParticles.size(); ++i)
-    // {
-    //     auto &particle = lParticles[i];
-    //     particle.Update(0.016f); // Assuming a frame time of ~16ms (60 FPS)
-    //     if (!particle.IsAlive())
-    //     {
-    //         ResetParticle(particle);
-    //     }
-    // }
+
     #pragma endregion
     
 }
