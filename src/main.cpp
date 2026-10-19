@@ -46,7 +46,7 @@ int main()
     lScene.Initialise(&window, &context, windowWidth, windowHeight, "Particle Sim");
     if(!lScene.isSceneInitialized())
     {
-        std::cerr << "Scene is already initialized. Exiting..." << std::endl;
+        std::cerr << "Scene initialization failed. Exiting..." << std::endl;
         return 1;
     }
 
