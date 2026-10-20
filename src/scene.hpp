@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include "particle.hpp"
+#include "camera.hpp"
 
 class Scene
 {
@@ -42,7 +43,8 @@ class Scene
 
         /// @brief Updates particles and renders the complete scene.
         void DrawScene(int windowWidth, int windowHeight);
-
+        
+        Camera lCamera; // Camera object for view and projection matrices
 
     private:
         bool bIsSceneInitialized = false;

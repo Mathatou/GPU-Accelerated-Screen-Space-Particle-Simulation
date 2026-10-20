@@ -84,6 +84,7 @@ void Scene::Initialise(SDL_Window** pPWindow, SDL_GLContext* pPCtx,
     );
     emptyVAO = std::make_shared<VertexArray>();
     bIsSceneInitialized = true;
+    lCamera = Camera();
 }
 
 bool Scene::isSceneInitialized() const
@@ -266,8 +267,11 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     glm::mat4 model = glm::rotate(glm::mat4(1.0f),
         static_cast<float>(SDL_GetTicks()) / 1000.0f * glm::radians(50.0f),
         glm::vec3(0.5f, 1.0f, 0.0f));
-    const glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f),
-        glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    // const glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f),
+    //     glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 view = glm::mat4(1.0f);
+    lCamera.Update();
+    view = lCamera.GetViewMatrix(view);
     const glm::mat4 projection = glm::perspective(glm::radians(45.0f),
         static_cast<float>(windowWidth) / static_cast<float>(windowHeight), 0.1f, 100.0f);
 
@@ -280,6 +284,7 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
     // ====== GEOMETRY PASS ======
     geometryBuffer->bind();
     geometryProgram->use();

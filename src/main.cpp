@@ -35,6 +35,32 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
         std::cout << "Switching fps counter display mode." << std::endl;
         FPSDebugMode = !FPSDebugMode;
     }
+    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_Z)
+    {
+        lScene.lCamera.OnKeyboardInput(SDLK_Z, 0.016f); // Assuming a deltaTime of 16ms for this example
+    }
+    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_S)
+    {
+        lScene.lCamera.OnKeyboardInput(SDLK_S, 0.016f); // Assuming a deltaTime of 16ms for this example
+    }
+    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_D)
+    {
+        lScene.lCamera.OnKeyboardInput(SDLK_D, 0.016f); // Assuming a deltaTime of 16ms for this example
+    }
+    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_Q)
+    {
+        lScene.lCamera.OnKeyboardInput(SDLK_Q, 0.016f); // Assuming a deltaTime of 16ms for this example
+    }
+    if(pEvent.type == SDL_EVENT_MOUSE_MOTION)
+    {
+        float xoffset = static_cast<float>(pEvent.motion.xrel);
+        float yoffset = static_cast<float>(pEvent.motion.yrel);
+        lScene.lCamera.OnMouseMove(xoffset, yoffset);
+    }
+    if(pEvent.type == SDL_EVENT_MOUSE_WHEEL)
+    {
+        lScene.lCamera.OnMouseScroll(pEvent.wheel.y);
+    }
 }
 #pragma endregion
 
