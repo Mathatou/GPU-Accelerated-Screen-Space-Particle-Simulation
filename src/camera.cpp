@@ -10,7 +10,7 @@ Camera::Camera()
     worldUp = up;
     yaw = glm::radians(-90.0f);
     pitch = glm::radians(0.0f);
-    speed = 2.5f;
+    speed = 4.5f;
     sensitivity = 0.001f;
 }
 
