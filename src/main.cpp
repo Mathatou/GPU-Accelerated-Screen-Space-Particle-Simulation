@@ -35,6 +35,20 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
         std::cout << "Switching fps counter display mode." << std::endl;
         FPSDebugMode = !FPSDebugMode;
     }
+    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_F11)
+    {
+        std::cout << "Switching fullscreen mode." << std::endl;
+        Uint32 windowFlags = SDL_GetWindowFlags(SDL_GL_GetCurrentWindow());
+        if(windowFlags & SDL_WINDOW_FULLSCREEN)
+        {
+            SDL_SetWindowFullscreen(SDL_GL_GetCurrentWindow(), 0);
+        }
+        else
+        {
+            SDL_SetWindowFullscreen(SDL_GL_GetCurrentWindow(), SDL_WINDOW_FULLSCREEN);
+        }
+    }
+    #pragma region Camera Controls
     if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_Z)
     {
         lScene.lCamera.OnKeyboardInput(SDLK_Z, 0.016f); // Assuming a deltaTime of 16ms for this example
@@ -51,6 +65,14 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
     {
         lScene.lCamera.OnKeyboardInput(SDLK_Q, 0.016f); // Assuming a deltaTime of 16ms for this example
     }
+    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_SPACE)
+    {
+        lScene.lCamera.OnKeyboardInput(SDLK_SPACE, 0.016f); // Assuming a deltaTime of 16ms for this example
+    }
+    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_LSHIFT)
+    {
+        lScene.lCamera.OnKeyboardInput(SDLK_LSHIFT, 0.016f); // Assuming a deltaTime of 16ms for this example
+    }
     if(pEvent.type == SDL_EVENT_MOUSE_MOTION)
     {
         float xoffset = static_cast<float>(pEvent.motion.xrel);
@@ -61,6 +83,7 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
     {
         lScene.lCamera.OnMouseScroll(pEvent.wheel.y);
     }
+    #pragma endregion
 }
 #pragma endregion
 

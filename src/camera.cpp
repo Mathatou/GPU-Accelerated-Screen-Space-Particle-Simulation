@@ -80,4 +80,8 @@ void Camera::OnKeyboardInput(int key, float deltaTime)
         position -= right * speed * deltaTime;
     if(key == SDLK_D) // Right
         position += right * speed * deltaTime;
+    if(key == SDLK_SPACE) // Up
+        position += up * speed * deltaTime;
+    if(key == SDLK_LSHIFT) // Down
+        position -= up * speed * deltaTime;
 }
