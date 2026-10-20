@@ -17,10 +17,11 @@ class Scene
         /// @brief Creates the SDL window, OpenGL context, framebuffer, and shader programs.
         void Initialise(SDL_Window** pPWindow, SDL_GLContext* pPCtx,
                         int width, int height, const char* title);
+       
 
         /// @brief Checks if the scene is initialized.
         bool isSceneInitialized() const;
-        
+
         /// @brief Called when the window is resized.
         void onResize(int height, int width);
 
@@ -51,6 +52,15 @@ class Scene
         Camera lCamera; // Camera object for view and projection matrices
 
     private:
+        /// @brief Initializes a texture with the specified parameters and attaches it to the given framebuffer.
+        void initTextureAndAttach(std::shared_ptr<ge::gl::Framebuffer>& framebuffer,
+            std::shared_ptr<ge::gl::Texture>& texture,
+            GLenum textureTarget,
+            GLenum internalFormat,
+            int width,
+            int height,
+            GLenum attachment);
+
         bool bIsSceneInitialized = false;
         const std::string shaderFolder = "../src/shaders/";
         std::shared_ptr<ge::gl::Framebuffer> geometryBuffer;

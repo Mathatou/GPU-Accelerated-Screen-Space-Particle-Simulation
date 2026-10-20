@@ -59,13 +59,11 @@ void Scene::Initialise(SDL_Window** pPWindow, SDL_GLContext* pPCtx,
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_PROGRAM_POINT_SIZE);
 
-    colorTexture = std::make_shared<Texture>(GL_TEXTURE_2D, GL_RGBA8, 1, width, height);
-    depthTexture = std::make_shared<Texture>(GL_TEXTURE_2D, GL_DEPTH_COMPONENT32, 1, width, height);
-    normalTexture = std::make_shared<Texture>(GL_TEXTURE_2D, GL_RGBA16F, 1, width, height);
+    // Create the framebuffer before attaching its color and depth textures.
     geometryBuffer = std::make_shared<Framebuffer>();
-    geometryBuffer->attachTexture(GL_COLOR_ATTACHMENT0, colorTexture.get());
-    geometryBuffer->attachTexture(GL_COLOR_ATTACHMENT1, normalTexture.get());
-    geometryBuffer->attachTexture(GL_DEPTH_ATTACHMENT, depthTexture.get());
+    initTextureAndAttach(geometryBuffer, colorTexture, GL_TEXTURE_2D, GL_RGBA8, width, height, GL_COLOR_ATTACHMENT0);
+    initTextureAndAttach(geometryBuffer, normalTexture, GL_TEXTURE_2D, GL_RGBA16F, width, height, GL_COLOR_ATTACHMENT1);
+    initTextureAndAttach(geometryBuffer, depthTexture, GL_TEXTURE_2D, GL_DEPTH_COMPONENT32, width, height, GL_DEPTH_ATTACHMENT);
 
     geometryProgram = std::make_shared<Program>(
         std::make_shared<Shader>(GL_VERTEX_SHADER, LoadShader("0_geometry.vert")),
@@ -92,17 +90,26 @@ bool Scene::isSceneInitialized() const
     return bIsSceneInitialized;
 }
 
+void Scene::initTextureAndAttach(std::shared_ptr<Framebuffer>& framebuffer,
+            std::shared_ptr<Texture>& texture,
+            GLenum textureTarget,
+            GLenum internalFormat,
+            int width,
+            int height,
+            GLenum attachment)
+{
+    texture = std::make_shared<Texture>(textureTarget, internalFormat, 1, width, height);
+    framebuffer->attachTexture(attachment, texture.get());
+}
+
+
 void Scene::onResize(int height, int width)
 {
     // Update the scene's internal state when the window is resized
-    colorTexture = std::make_shared<Texture>(GL_TEXTURE_2D, GL_RGBA8, 1, width, height);
-    depthTexture = std::make_shared<Texture>(GL_TEXTURE_2D, GL_DEPTH_COMPONENT32, 1, width, height);
-    normalTexture = std::make_shared<Texture>(GL_TEXTURE_2D, GL_RGBA16F, 1, width, height);
-    geometryBuffer->attachTexture(GL_COLOR_ATTACHMENT0, colorTexture.get());
-    geometryBuffer->attachTexture(GL_COLOR_ATTACHMENT1, normalTexture.get());
-    geometryBuffer->attachTexture(GL_DEPTH_ATTACHMENT, depthTexture.get());
+    initTextureAndAttach(geometryBuffer, colorTexture, GL_TEXTURE_2D, GL_RGBA8, width, height, GL_COLOR_ATTACHMENT0);
+    initTextureAndAttach(geometryBuffer, normalTexture, GL_TEXTURE_2D, GL_RGBA16F, width, height, GL_COLOR_ATTACHMENT1);
+    initTextureAndAttach(geometryBuffer, depthTexture, GL_TEXTURE_2D, GL_DEPTH_COMPONENT32, width, height, GL_DEPTH_ATTACHMENT);
     lCamera.Update(); // Update camera matrices if necessary
-
 }
 
 void Scene::Cleanup(SDL_Window* pWindow, SDL_GLContext pCtx)
