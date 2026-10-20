@@ -15,6 +15,7 @@ auto lFrequency = SDL_GetPerformanceFrequency();
 int frameCount = 0;
 float FPS = 0.f;
 bool FPSDebugMode = true;
+bool isFullScreen = false;
 Scene lScene;
 #pragma endregion
 
@@ -37,7 +38,17 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
     }
     if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_F11)
     {
-        std::cout << "Switching fullscreen mode." << std::endl;
+        if(isFullScreen)
+        {
+            std::cout << "Switching to windowed mode." << std::endl;
+            isFullScreen = false;
+        }
+        else
+        {
+            std::cout << "Switching to fullscreen mode." << std::endl;
+            isFullScreen = true;
+        }
+        
         Uint32 windowFlags = SDL_GetWindowFlags(SDL_GL_GetCurrentWindow());
         if(windowFlags & SDL_WINDOW_FULLSCREEN)
         {
@@ -47,6 +58,14 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
         {
             SDL_SetWindowFullscreen(SDL_GL_GetCurrentWindow(), SDL_WINDOW_FULLSCREEN);
         }
+    }
+    if(pEvent.type == SDL_EVENT_WINDOW_RESIZED)
+    {
+        windowWidth = pEvent.window.data1;
+        windowHeight = pEvent.window.data2;
+        lScene.onResize(windowHeight, windowWidth);
+        
+        ge::gl::glViewport(0, 0, windowWidth, windowHeight);
     }
     #pragma region Camera Controls
     if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_Z)

@@ -92,6 +92,19 @@ bool Scene::isSceneInitialized() const
     return bIsSceneInitialized;
 }
 
+void Scene::onResize(int height, int width)
+{
+    // Update the scene's internal state when the window is resized
+    colorTexture = std::make_shared<Texture>(GL_TEXTURE_2D, GL_RGBA8, 1, width, height);
+    depthTexture = std::make_shared<Texture>(GL_TEXTURE_2D, GL_DEPTH_COMPONENT32, 1, width, height);
+    normalTexture = std::make_shared<Texture>(GL_TEXTURE_2D, GL_RGBA16F, 1, width, height);
+    geometryBuffer->attachTexture(GL_COLOR_ATTACHMENT0, colorTexture.get());
+    geometryBuffer->attachTexture(GL_COLOR_ATTACHMENT1, normalTexture.get());
+    geometryBuffer->attachTexture(GL_DEPTH_ATTACHMENT, depthTexture.get());
+    lCamera.Update(); // Update camera matrices if necessary
+
+}
+
 void Scene::Cleanup(SDL_Window* pWindow, SDL_GLContext pCtx)
 {
     geometryBuffer.reset();

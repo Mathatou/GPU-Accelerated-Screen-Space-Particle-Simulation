@@ -2,6 +2,7 @@
 
 #include <SDL3/SDL.h>
 #include <geGL/geGL.h>
+#include <geGL/StaticCalls.h>
 #include <string>
 #include <memory>
 #include "particle.hpp"
@@ -20,6 +21,9 @@ class Scene
         /// @brief Checks if the scene is initialized.
         bool isSceneInitialized() const;
         
+        /// @brief Called when the window is resized.
+        void onResize(int height, int width);
+
         /// @brief Releases the scene graphics resources and destroys the SDL objects.
         void Cleanup(SDL_Window* pWindow, SDL_GLContext pCtx);
 
