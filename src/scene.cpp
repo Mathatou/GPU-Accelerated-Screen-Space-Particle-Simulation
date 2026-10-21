@@ -186,11 +186,59 @@ void Scene::InitCube()
 
 void Scene::InitPlane()
 {
+    // Pavé rectangulaire : largeur X = 20, profondeur Z = 10, épaisseur Y = 0.4.
+    // Chaque sommet contient une position et une normale.
     const std::vector<float> vertices = {
-         5.0f, -0.5f,  5.0f, 1.0f, 1.0f, 0.0f, -5.0f, -0.5f,  5.0f, 1.0f, 1.0f, 0.0f,
-        -5.0f, -0.5f, -5.0f, 1.0f, 1.0f, 0.0f,  5.0f, -0.5f,  5.0f, 1.0f, 1.0f, 0.0f,
-        -5.0f, -0.5f, -5.0f, 1.0f, 1.0f, 0.0f,  5.0f, -0.5f, -5.0f, 1.0f, 1.0f, 0.0f
+        // Face supérieure
+         10.0f, -0.5f,  5.0f, 0.0f,  1.0f, 0.0f,
+        -10.0f, -0.5f,  5.0f, 0.0f,  1.0f, 0.0f,
+        -10.0f, -0.5f, -5.0f, 0.0f,  1.0f, 0.0f,
+         10.0f, -0.5f,  5.0f, 0.0f,  1.0f, 0.0f,
+        -10.0f, -0.5f, -5.0f, 0.0f,  1.0f, 0.0f,
+         10.0f, -0.5f, -5.0f, 0.0f,  1.0f, 0.0f,
+
+        // Face inférieure
+         10.0f, -0.9f, -5.0f, 0.0f, -1.0f, 0.0f,
+        -10.0f, -0.9f, -5.0f, 0.0f, -1.0f, 0.0f,
+        -10.0f, -0.9f,  5.0f, 0.0f, -1.0f, 0.0f,
+         10.0f, -0.9f, -5.0f, 0.0f, -1.0f, 0.0f,
+        -10.0f, -0.9f,  5.0f, 0.0f, -1.0f, 0.0f,
+         10.0f, -0.9f,  5.0f, 0.0f, -1.0f, 0.0f,
+
+        // Face avant (Z positif)
+        -10.0f, -0.5f, 5.0f, 0.0f, 0.0f,  1.0f,
+         10.0f, -0.5f, 5.0f, 0.0f, 0.0f,  1.0f,
+         10.0f, -0.9f, 5.0f, 0.0f, 0.0f,  1.0f,
+         10.0f, -0.9f, 5.0f, 0.0f, 0.0f,  1.0f,
+        -10.0f, -0.9f, 5.0f, 0.0f, 0.0f,  1.0f,
+        -10.0f, -0.5f, 5.0f, 0.0f, 0.0f,  1.0f,
+
+        // Face arrière (Z négatif)
+         10.0f, -0.5f, -5.0f, 0.0f, 0.0f, -1.0f,
+        -10.0f, -0.9f, -5.0f, 0.0f, 0.0f, -1.0f,
+         10.0f, -0.9f, -5.0f, 0.0f, 0.0f, -1.0f,
+        -10.0f, -0.9f, -5.0f, 0.0f, 0.0f, -1.0f,
+         10.0f, -0.5f, -5.0f, 0.0f, 0.0f, -1.0f,
+        -10.0f, -0.5f, -5.0f, 0.0f, 0.0f, -1.0f,
+
+        // Face gauche (X négatif)
+        -10.0f, -0.5f, -5.0f, -1.0f, 0.0f, 0.0f,
+        -10.0f, -0.9f,  5.0f, -1.0f, 0.0f, 0.0f,
+        -10.0f, -0.5f,  5.0f, -1.0f, 0.0f, 0.0f,
+        -10.0f, -0.5f, -5.0f, -1.0f, 0.0f, 0.0f,
+        -10.0f, -0.9f, -5.0f, -1.0f, 0.0f, 0.0f,
+        -10.0f, -0.9f,  5.0f, -1.0f, 0.0f, 0.0f,
+
+        // Face droite (X positif)
+         10.0f, -0.5f,  5.0f, 1.0f, 0.0f, 0.0f,
+         10.0f, -0.9f,  5.0f, 1.0f, 0.0f, 0.0f,
+         10.0f, -0.9f, -5.0f, 1.0f, 0.0f, 0.0f,
+         10.0f, -0.9f, -5.0f, 1.0f, 0.0f, 0.0f,
+         10.0f, -0.5f, -5.0f, 1.0f, 0.0f, 0.0f,
+         10.0f, -0.5f,  5.0f, 1.0f, 0.0f, 0.0f,
     };
+
+    
     planeVBO = std::make_shared<Buffer>(vertices.size() * sizeof(float), vertices.data());
     planeVAO = std::make_shared<VertexArray>();
     planeVAO->addAttrib(planeVBO, 0, 3, GL_FLOAT, 6 * sizeof(float), 0);
@@ -257,7 +305,7 @@ void Scene::Draw3DCube()
 void Scene::Draw3DPlane()
 {
     planeVAO->bind();
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
     planeVAO->unbind();
 }
 
@@ -298,10 +346,21 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     // ====== PARTICLE COMPUTE PASS ======
     gParticleSSBO->bindBase(GL_SHADER_STORAGE_BUFFER, 0);
     computeProgram->use();
+    // The compute shader uses this value to advance position and lifetime.
     glUniform1f(glGetUniformLocation(computeProgram->getId(), "uDeltaTime"), 0.016f);
+    const float deltaTime = 0.016f; // Assuming a fixed time step of 16ms (60 FPS)
+    computeProgram->set1f("uDeltaTime",deltaTime);
+    computeProgram->setMatrix4fv("uView",glm::value_ptr(view));
+    computeProgram->setMatrix4fv("uProjection",glm::value_ptr(projection));
+    normalTexture->bind(0);
+    depthTexture->bind(2);
+    
+    // Compute the number of work groups needed based on the number of particles
     const GLuint workGroupCount = static_cast<GLuint>((lParticles.size() + 255) / 256);
     computeProgram->dispatch(workGroupCount, 1, 1);
+    // Ensure that the compute shader has finished writing to the SSBO before rendering
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
+    
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
