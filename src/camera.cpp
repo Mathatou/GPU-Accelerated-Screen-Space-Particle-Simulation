@@ -37,7 +37,7 @@ glm::mat4 Camera::GetViewMatrix(glm::mat4& view)
 /// @brief Handles mouse movement input to adjust the camera's yaw and pitch angles, which in turn updates the camera's front vector. 
 void Camera::OnMouseMove(float xoffset, float yoffset)
 {
-    std::cout << "Mouse moved: xoffset = " << xoffset << ", yoffset = " << yoffset << std::endl;
+    // std::cout << "Mouse moved: xoffset = " << xoffset << ", yoffset = " << yoffset << std::endl;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
@@ -82,6 +82,6 @@ void Camera::OnKeyboardInput(int key, float deltaTime)
         position += right * speed * deltaTime;
     if(key == SDLK_SPACE) // Up
         position += up * speed * deltaTime;
-    if(key == SDLK_LSHIFT) // Down
+    if(key == SDLK_W) // Down
         position -= up * speed * deltaTime;
 }

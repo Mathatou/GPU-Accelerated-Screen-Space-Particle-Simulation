@@ -16,6 +16,7 @@ int frameCount = 0;
 float FPS = 0.f;
 bool FPSDebugMode = true;
 bool isFullScreen = false;
+bool isMouseRelative = true;
 Scene lScene;
 #pragma endregion
 
@@ -48,7 +49,7 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
             std::cout << "Switching to fullscreen mode." << std::endl;
             isFullScreen = true;
         }
-        
+
         Uint32 windowFlags = SDL_GetWindowFlags(SDL_GL_GetCurrentWindow());
         if(windowFlags & SDL_WINDOW_FULLSCREEN)
         {
@@ -88,15 +89,20 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
     {
         lScene.lCamera.OnKeyboardInput(SDLK_SPACE, 0.016f); // Assuming a deltaTime of 16ms for this example
     }
-    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_LSHIFT)
+    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_W)
     {
-        lScene.lCamera.OnKeyboardInput(SDLK_LSHIFT, 0.016f); // Assuming a deltaTime of 16ms for this example
+        lScene.lCamera.OnKeyboardInput(SDLK_W, 0.016f); // Assuming a deltaTime of 16ms for this example
     }
     if(pEvent.type == SDL_EVENT_MOUSE_MOTION)
     {
         float xoffset = static_cast<float>(pEvent.motion.xrel);
         float yoffset = static_cast<float>(pEvent.motion.yrel);
         lScene.lCamera.OnMouseMove(xoffset, yoffset);
+    }
+    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_F1)
+    {
+        SDL_SetWindowRelativeMouseMode(SDL_GL_GetCurrentWindow(), !isMouseRelative); // Switch relative mouse mode
+        isMouseRelative = !isMouseRelative;
     }
     if(pEvent.type == SDL_EVENT_MOUSE_WHEEL)
     {
@@ -109,18 +115,19 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
 #pragma region Main Loop
 int main()
 {
-    SDL_Window* window = nullptr;
+    SDL_Window* lWindow = nullptr;
     SDL_GLContext context = nullptr;
-    lScene.Initialise(&window, &context, windowWidth, windowHeight, "Particle Sim");
+    lScene.Initialise(&lWindow, &context, windowWidth, windowHeight, "Particle Sim");
+    SDL_SetWindowRelativeMouseMode(lWindow, true); // Enable relative mouse mode for capturing mouse movement
     if(!lScene.isSceneInitialized())
     {
         std::cerr << "Scene initialization failed. Exiting..." << std::endl;
         return 1;
     }
 
-    if(window == nullptr || context == nullptr)
+    if(lWindow == nullptr || context == nullptr)
     {
-        lScene.Cleanup(window, context);
+        lScene.Cleanup(lWindow, context);
         return 1;
     }
 
@@ -137,7 +144,7 @@ int main()
         {
             HandleEvent(event, running);
         }
-        SDL_GL_SwapWindow(window);
+        SDL_GL_SwapWindow(lWindow);
         
         #pragma region FPS Calculation
         if(FPSDebugMode)
@@ -156,7 +163,7 @@ int main()
         #pragma endregion
     }
 
-    lScene.Cleanup(window, context);
+    lScene.Cleanup(lWindow, context);
     return 0;
 }
 #pragma endregion
