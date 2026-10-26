@@ -15,6 +15,7 @@ layout(std430, binding = 0) buffer ParticleBufferData
 
 layout(location = 0) uniform float uDeltaTime; // Assuming a fixed time step of 16ms (60 FPS)
 layout(binding = 0) uniform sampler2D uNormalTex;
+layout(binding = 1) uniform sampler2D uColorTex;
 layout(binding = 2) uniform sampler2D uDepthTex;
 layout(location = 1) uniform mat4 uView;
 layout(location = 2) uniform mat4 uProjection;
@@ -87,7 +88,6 @@ void main()
     if(index >= particles.length()) return;
 
     Particle vParticle = particles[index];
-    float thickness = 0.01;
     // https://gamedev.stackexchange.com/questions/8718/glsl-how-do-i-cast-a-float-to-an-int
     highp int intDeltatime = int(uDeltaTime * 1000.0); // Convert delta time to milliseconds
     uint seed = index * intDeltatime; // Create a seed based on index and delta time
@@ -97,11 +97,12 @@ void main()
     vec3 ndcSpacePos = clipSpacePos.xyz / clipSpacePos.w; // Convert to NDC space
     vec2 lUV = ndcSpacePos.xy * 0.5 + 0.5; // Convert to texture coordinates (0 to 1)
 
+    vec3 thicknessVec = vParticle.velocity_size.xyz * uDeltaTime;
+    float thickness = length(thicknessVec);   
     float depthValue = texture(uDepthTex, lUV).r; // Sample the depth
     float particleDepth = ndcSpacePos.z * 0.5 + 0.5; // Convert particle depth to [0, 1] range
 
     vec3 surfaceNormal = texture(uNormalTex,lUV).xyz;
-
     // Do not do the collision computation if the particle is outside the screen bounds
     if(lUV.x > 0.0 && lUV.x < 1.0 && lUV.y > 0.0 && lUV.y < 1.0)
     {
