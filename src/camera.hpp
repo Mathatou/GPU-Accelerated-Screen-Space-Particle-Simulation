@@ -14,6 +14,7 @@ class Camera
         void OnMouseMove(float xoffset, float yoffset);
         void OnKeyboardInput(int key, float deltaTime);
         void OnMouseScroll(float yoffset);
+        glm::vec3 GetPosition()  const { return glm::vec3(position); } // Return position as vec4 for shader compatibility
 
     private:
         glm::vec3 position;

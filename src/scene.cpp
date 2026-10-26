@@ -71,7 +71,7 @@ void Scene::Initialise(SDL_Window** pPWindow, SDL_GLContext* pPCtx,
     );
     displayProgram = std::make_shared<Program>(
         std::make_shared<Shader>(GL_VERTEX_SHADER, LoadShader("0_display.vert")),
-        std::make_shared<Shader>(GL_FRAGMENT_SHADER, LoadShader("0_display.frag"))
+        std::make_shared<Shader>(GL_FRAGMENT_SHADER, LoadShader("0_displaySSR.frag"))
     );
     computeProgram = std::make_shared<Program>(
         std::make_shared<Shader>(GL_COMPUTE_SHADER, LoadShader("0_particle.comp"))
@@ -335,6 +335,7 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     glm::mat4 model = glm::rotate(glm::mat4(1.0f),
         static_cast<float>(SDL_GetTicks()) / 1000.0f * glm::radians(50.0f),
         glm::vec3(0.5f, 1.0f, 0.0f));
+    // glm::mat4 model = glm::mat4(1.0f);
     // const glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f),
     //     glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 view = glm::mat4(1.0f);
@@ -353,6 +354,7 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     computeProgram->setMatrix4fv("uView",glm::value_ptr(view));
     computeProgram->setMatrix4fv("uProjection",glm::value_ptr(projection));
     normalTexture->bind(0);
+    colorTexture->bind(1);
     depthTexture->bind(2);
     
     // Compute the number of work groups needed based on the number of particles
@@ -372,19 +374,26 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
     geometryProgram->setMatrix4fv("uView", glm::value_ptr(view));
     geometryProgram->setMatrix4fv("uProjection", glm::value_ptr(projection));
+    geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.11, 0.32, 0.22, 1.0)));
     Draw3DCube();
 
     model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.7f, 0.7f));
     geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.7,0.7,0.7, 1.0)));
     Draw3DPlane();
     geometryBuffer->unbind();
 
     // ====== DISPLAY PASS ======
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // SSRProgram->use();
     displayProgram->use();
     normalTexture->bind(0);
     colorTexture->bind(1);
     depthTexture->bind(2);
+    displayProgram->setMatrix4fv("uView", glm::value_ptr(view));
+    displayProgram->setMatrix4fv("uProjection", glm::value_ptr(projection));
+    glm::vec3 camPos3D = glm::vec3(lCamera.GetPosition());
+    displayProgram->set3fv("uCameraPos",glm::value_ptr(camPos3D));
     emptyVAO->bind();
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     emptyVAO->unbind();
