@@ -61,6 +61,11 @@ class Scene
             int height,
             GLenum attachment);
 
+        float GetTime() const
+        {
+            return static_cast<float>(SDL_GetTicks()) / 1000.0f; // Convert milliseconds to seconds
+        }
+
         bool bIsSceneInitialized = false;
         const std::string shaderFolder = "../src/shaders/";
         std::shared_ptr<ge::gl::Framebuffer> geometryBuffer;

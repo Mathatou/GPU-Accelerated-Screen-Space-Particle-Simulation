@@ -8,5 +8,5 @@ uniform vec4 uColor;
 void main()
 {
     outColor = uColor;
-    outNormal = vec4(vNormal, 1.0);
+    outNormal = vec4(normalize(vNormal), 1.0);
 }

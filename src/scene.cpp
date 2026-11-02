@@ -337,7 +337,9 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     glm::mat4 model = glm::rotate(glm::mat4(1.0f),
         static_cast<float>(SDL_GetTicks()) / 1000.0f * glm::radians(50.0f),
         glm::vec3(0.5f, 1.0f, 0.0f));
-    // glm::mat4 model = glm::mat4(1.0f);
+
+    model = glm::mat4(1.0f);
+
     // const glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f),
     //     glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 view = glm::mat4(1.0f);
@@ -377,11 +379,15 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     geometryProgram->setMatrix4fv("uView", glm::value_ptr(view));
     geometryProgram->setMatrix4fv("uProjection", glm::value_ptr(projection));
     geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.11, 0.32, 0.22, 1.0)));
+    geometryProgram->set1i("bIsPlane", false);
     Draw3DCube();
 
     model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.7f, 0.7f));
     geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.7,0.7,0.7, 1.0)));
+    // rgb(67, 188, 247)
+    geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.26, 0.74, 0.97, 1.0)));
+    geometryProgram->set1i("bIsPlane", true);
+    geometryProgram->set1f("iTime", GetTime());
     Draw3DPlane();
     geometryBuffer->unbind();
 
