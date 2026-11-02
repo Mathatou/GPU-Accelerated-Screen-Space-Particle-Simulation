@@ -59,9 +59,9 @@ float randomRange(inout uint state, float minVal, float maxVal) {
 void ResetParticle(inout Particle pParticle, inout uint seed)
 {
     pParticle.position_lifetime = vec4(
-        randomRange(seed, -5.0,  5.0),  // Random x position between -5 and 5
+        randomRange(seed, -10.0,  10.0),  // Random x position between -5 and 5
         randomRange(seed,  5.0, 10.0),  // Random y position between -5 and 5
-        randomRange(seed, -5.0,  5.0),  // Random z position between -5 and 5
+        randomRange(seed, -10.0,  10.0),  // Random z position between -5 and 5
         2.0                          // Reset lifetime to 1 second
     );
 
