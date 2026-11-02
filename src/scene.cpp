@@ -71,7 +71,7 @@ void Scene::Initialise(SDL_Window** pPWindow, SDL_GLContext* pPCtx,
     );
     displayProgram = std::make_shared<Program>(
         std::make_shared<Shader>(GL_VERTEX_SHADER, LoadShader("0_display.vert")),
-        std::make_shared<Shader>(GL_FRAGMENT_SHADER, LoadShader("0_displaySSR.frag"))
+        std::make_shared<Shader>(GL_FRAGMENT_SHADER, LoadShader("0_display.frag"))
     );
     computeProgram = std::make_shared<Program>(
         std::make_shared<Shader>(GL_COMPUTE_SHADER, LoadShader("0_particle.comp"))
