@@ -268,11 +268,13 @@ void Scene::InitParticle(int pNumber)
             static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f,
             static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f,
             static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f);
-        float lLifetime = static_cast<float>(rand()) / RAND_MAX * 5.0f + 1.0f; // Lifetime between 1 and 6 seconds
-        float lSize = static_cast<float>(rand()) / RAND_MAX * 0.5f + 0.1f; // Size between 0.1 and 0.6
-        glm::vec4 lColor = glm::vec4(static_cast<float>(rand()) / RAND_MAX,
-            static_cast<float>(rand()) / RAND_MAX,
-            static_cast<float>(rand()) / RAND_MAX, 1.0f); // Random color with full alpha
+        float lLifetime = static_cast<float>(rand()) / RAND_MAX + 1.0f; // Lifetime between 1 and 2 seconds
+        float lSize = static_cast<float>(rand()) / RAND_MAX * 0.2f + 0.1f; // Size between 0.1 and 0.3
+        glm::vec4 lColor = glm::vec4(
+            0.f,
+            0.f,
+            static_cast<float>(rand()) / RAND_MAX, 
+            1.0f); // Random color with full alpha
         lParticles.push_back(Particle(lPosition, lVelocity, lLifetime, lSize, lColor));
     }
     InitParticleBuffer();

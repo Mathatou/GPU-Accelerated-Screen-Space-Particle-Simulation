@@ -66,17 +66,17 @@ void ResetParticle(inout Particle pParticle, inout uint seed)
     );
 
     pParticle.velocity_size = vec4(
-        randomRange(seed, -1.0, 1.0),  // Random x velocity between -1 and 1
-        randomRange(seed, -1.0, 1.0),  // Random y velocity between -1 and 1
-        randomRange(seed, -1.0, 1.0),  // Random z velocity between -1 and 1
-        randomRange(seed, 0.1, 0.3)    // Random size between 1 and 3
+        0,  // Random x velocity between -1 and 1
+        randomRange(seed, -5.0, -10.0),  // Random y velocity between -1 and 1
+        0,  // Random z velocity between -1 and 1
+        randomRange(seed, 0.1, 0.3) * 10.0  // Random size between 1 and 3
     );
 
     pParticle.color = vec4(
-        randomFloat(seed),             // Random red component (0.0 to 1.0)
-        randomFloat(seed),             // Random green component (0.0 to 1.0)
-        randomFloat(seed),             // Random blue component (0.0 to 1.0)
-        1.0                          // Full opacity
+        0,                 // Random red component (0.0 to 1.0)
+        0,                 // Random green component (0.0 to 1.0)
+        randomFloat(seed)*0.5 + 0.5, // Random blue component (0.5 to 1.0)
+        1.0                // Full opacity
     );
 }
 
@@ -88,6 +88,7 @@ void main()
     if(index >= particles.length()) return;
 
     Particle vParticle = particles[index];
+
     // https://gamedev.stackexchange.com/questions/8718/glsl-how-do-i-cast-a-float-to-an-int
     highp int intDeltatime = int(uDeltaTime * 1000.0); // Convert delta time to milliseconds
     uint seed = index * intDeltatime; // Create a seed based on index and delta time
@@ -115,7 +116,7 @@ void main()
 
     Update(uDeltaTime, vParticle, index);
     
-    if(vParticle.position_lifetime.w <= 0.0)
+    if(vParticle.position_lifetime.y <= -2.5 || vParticle.position_lifetime.w <= 0.0)
     {
         ResetParticle(vParticle, seed);
     }
