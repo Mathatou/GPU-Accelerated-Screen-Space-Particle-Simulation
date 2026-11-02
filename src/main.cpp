@@ -2,10 +2,11 @@
 #include "scene.hpp"
 
 #include <iostream>
+#include <map>
 #pragma endregion
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
-#define PARTICLE_NUMBER 100000
+#define PARTICLE_NUMBER 10000
 
 #pragma region Application State
 int windowWidth = WINDOW_WIDTH;
@@ -18,6 +19,7 @@ bool FPSDebugMode = true;
 bool isFullScreen = false;
 bool isMouseRelative = true;
 Scene lScene;
+std::map<int, bool> keys;
 #pragma endregion
 
 #pragma region Event Handling
@@ -31,6 +33,18 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
     {
         running = false;
         std::cout << "Escape key pressed. Exiting..." << std::endl;
+    }
+    if(pEvent.type == SDL_EVENT_KEY_DOWN)
+    {
+        keys[pEvent.key.key] = true;
+        if(pEvent.key.key == SDLK_R)
+        {
+            lScene.lCamera.Reset();
+        }
+    }
+    if(pEvent.type == SDL_EVENT_KEY_UP)
+    {
+        keys[pEvent.key.key] = false;
     }
     if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_F5)
     {
@@ -69,30 +83,6 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
         ge::gl::glViewport(0, 0, windowWidth, windowHeight);
     }
     #pragma region Camera Controls
-    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_Z)
-    {
-        lScene.lCamera.OnKeyboardInput(SDLK_Z, 0.016f); // Assuming a deltaTime of 16ms for this example
-    }
-    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_S)
-    {
-        lScene.lCamera.OnKeyboardInput(SDLK_S, 0.016f); // Assuming a deltaTime of 16ms for this example
-    }
-    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_D)
-    {
-        lScene.lCamera.OnKeyboardInput(SDLK_D, 0.016f); // Assuming a deltaTime of 16ms for this example
-    }
-    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_Q)
-    {
-        lScene.lCamera.OnKeyboardInput(SDLK_Q, 0.016f); // Assuming a deltaTime of 16ms for this example
-    }
-    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_SPACE)
-    {
-        lScene.lCamera.OnKeyboardInput(SDLK_SPACE, 0.016f); // Assuming a deltaTime of 16ms for this example
-    }
-    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_W)
-    {
-        lScene.lCamera.OnKeyboardInput(SDLK_W, 0.016f); // Assuming a deltaTime of 16ms for this example
-    }
     if(pEvent.type == SDL_EVENT_MOUSE_MOTION)
     {
         float xoffset = static_cast<float>(pEvent.motion.xrel);
@@ -135,29 +125,40 @@ int main()
     lScene.InitPlane();
     lScene.InitParticle(PARTICLE_NUMBER); // Initialize 100,000 particles
     bool running = true;
+    auto previousFrame = SDL_GetPerformanceCounter();
     while(running)
     {
-        lScene.DrawScene(windowWidth, windowHeight);
-
         SDL_Event event;
         while(SDL_PollEvent(&event))
         {
             HandleEvent(event, running);
         }
+        
+        const auto currentFrame = SDL_GetPerformanceCounter();
+        const float deltaTime = static_cast<float>(currentFrame - previousFrame) /
+            static_cast<float>(lFrequency);
+        previousFrame = currentFrame;
+
+        for(const auto& [key, pressed] : keys)
+        {
+            if(pressed)
+                lScene.lCamera.OnKeyboardInput(key, deltaTime);
+        }
+        
+
+        lScene.DrawScene(windowWidth, windowHeight);
         SDL_GL_SwapWindow(lWindow);
         
         #pragma region FPS Calculation
         if(FPSDebugMode)
         {
             frameCount++;
-            auto lCurrentTime = SDL_GetPerformanceCounter();
-            auto lElapsedTime = (lCurrentTime - lTimer) / static_cast<float>(lFrequency);
-            if(lElapsedTime >=1.f)
+            if(deltaTime >=1.f)
             {
-                FPS = frameCount/lElapsedTime;
+                FPS = frameCount/deltaTime;
                 std::cout << "FPS: " << FPS << std::endl; // Multiply by 2 because we measure over 1.0 seconds
                 frameCount = 0;
-                lTimer = lCurrentTime;
+                lTimer = currentFrame;
             }
         }
         #pragma endregion

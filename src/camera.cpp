@@ -3,15 +3,18 @@
 /// @brief Implements a simple camera system for 3D navigation and view matrix generation.
 Camera::Camera()
 {
+    Reset();
+}
+
+void Camera::Reset()
+{
     position = glm::vec3(0.0f, 0.0f, 5.0f);
-    front = glm::vec3(0.0f, 0.0f, -1.0f);
-    up = glm::vec3(0.0f, 1.0f, 0.0f);
-    right = glm::cross(front, up);
-    worldUp = up;
+    worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
     yaw = glm::radians(-90.0f);
-    pitch = glm::radians(0.0f);
+    pitch = 0.0f;
     speed = 4.5f;
     sensitivity = 0.001f;
+    Update();
 }
 
 /// @brief Updates the camera's front, right, and up vectors based on the current yaw and pitch angles.
@@ -37,24 +40,17 @@ glm::mat4 Camera::GetViewMatrix(glm::mat4& view)
 /// @brief Handles mouse movement input to adjust the camera's yaw and pitch angles, which in turn updates the camera's front vector. 
 void Camera::OnMouseMove(float xoffset, float yoffset)
 {
-    // std::cout << "Mouse moved: xoffset = " << xoffset << ", yoffset = " << yoffset << std::endl;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
     yaw += xoffset;
     pitch -= yoffset;
 
-    front = glm::normalize(glm::vec3(
-        cos(yaw) * cos(pitch),
-        sin(pitch),
-        sin(yaw) * cos(pitch)
-    ));
-    right = glm::normalize(glm::cross(front, worldUp));
-    up = glm::normalize(glm::cross(right, front));
     if (pitch > glm::radians(89.0f))
         pitch = glm::radians(89.0f);
     if (pitch < glm::radians(-89.0f))
         pitch = glm::radians(-89.0f);
+    Update();
 }
 
 /// @brief Handles mouse scroll input to adjust the camera's movement speed. 
@@ -71,7 +67,6 @@ void Camera::OnMouseScroll(float yoffset)
 /// @brief Handles keyboard input to move the camera in the scene based on the pressed key and elapsed time. 
 void Camera::OnKeyboardInput(int key, float deltaTime)
 {
-    std::cout << "Key pressed: " << key << std::endl;
     if(key == SDLK_Z) // Forward
         position += front * speed * deltaTime;
     if(key == SDLK_S) // Backward
@@ -82,6 +77,6 @@ void Camera::OnKeyboardInput(int key, float deltaTime)
         position += right * speed * deltaTime;
     if(key == SDLK_SPACE) // Up
         position += up * speed * deltaTime;
-    if(key == SDLK_W) // Down
+    if(key == SDLK_LCTRL || key == SDLK_W) // Down
         position -= up * speed * deltaTime;
 }
