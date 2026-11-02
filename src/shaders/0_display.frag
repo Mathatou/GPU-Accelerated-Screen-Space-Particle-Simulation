@@ -50,21 +50,25 @@ void main()
 
         // Convert to texture coordinates [0,1]
         vec2 newTexCoord = newClipSpacePos.xy * 0.5 + 0.5;
-
         // Check if the new texture coordinates are within bounds
         if(newTexCoord.x < 0.0 || newTexCoord.x > 1.0 || newTexCoord.y < 0.0 || newTexCoord.y > 1.0)
             break; // Exit if out of bounds
+        
+        vec2 centerOfScreen = vec2(0.5, 0.5);
 
+        float distanceToCenter = distance(newTexCoord, centerOfScreen);
+        float edgeFade = smoothstep(0.5, 0.45, distanceToCenter); // Adjust the fade range as needed
+        
         // Sample the depth at the new texture coordinates
         // Convert to [-1, 1]
         float sampledDepth = texture(uDepthTex, newTexCoord).r *2.0 - 1.0; 
 
+        float distanceFade = 1.0 - float(i)/100.0f;
         // If the new depth is less than the current depth, we hit a surface
         if(sampledDepth < newClipSpacePos.z && sampledDepth > newClipSpacePos.z - thickness)
         {
-            float distanceFade = 1.0 - float(i)/100.0f;
             reflectionColor = texture(uColorTex, newTexCoord);
-            mixFactor = 0.35 * distanceFade; // Adjust the mix factor as needed
+            mixFactor = 0.35*edgeFade*distanceFade;
             break;
         }
     }
