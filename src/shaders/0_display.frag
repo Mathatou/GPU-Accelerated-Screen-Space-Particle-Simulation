@@ -62,8 +62,9 @@ void main()
         // If the new depth is less than the current depth, we hit a surface
         if(sampledDepth < newClipSpacePos.z && sampledDepth > newClipSpacePos.z - thickness)
         {
+            float distanceFade = 1.0 - float(i)/100.0f;
             reflectionColor = texture(uColorTex, newTexCoord);
-            mixFactor = 0.35; // Adjust the mix factor as needed
+            mixFactor = 0.35 * distanceFade; // Adjust the mix factor as needed
             break;
         }
     }
