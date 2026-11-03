@@ -5,7 +5,7 @@ in layout(location = 1) vec3 inNormal;
 uniform mat4 uModel;
 uniform mat4 uView;
 uniform mat4 uProjection;
-uniform bool bIsPlane; 
+uniform bool bIsWater; 
 uniform float iTime; 
 out vec3 vNormal;
 
@@ -13,7 +13,7 @@ out vec3 vNormal;
 void main()
 {
     vec4 worldPosition = uModel * vec4(inPosition, 1.0);
-    if(bIsPlane)
+    if(bIsWater)
     {
         float wave1 = 0.07 +0.07 * sin(iTime * 2.0 + worldPosition.x * 1.5);
         float wave2 = 0.03 +0.07 * sin(iTime * 3.5 + worldPosition.z * 3);

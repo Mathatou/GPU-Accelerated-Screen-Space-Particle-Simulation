@@ -334,14 +334,12 @@ void Scene::DrawParticles(glm::mat4 const& view,
 /// Updates particle states and resets them if they are no longer alive. 
 void Scene::DrawScene(int windowWidth, int windowHeight)
 {
-    glm::mat4 model = glm::rotate(glm::mat4(1.0f),
-        static_cast<float>(SDL_GetTicks()) / 1000.0f * glm::radians(50.0f),
-        glm::vec3(0.5f, 1.0f, 0.0f));
-
-    model = glm::mat4(1.0f);
-
+    // glm::mat4 model = glm::rotate(glm::mat4(1.0f),
+    //     static_cast<float>(SDL_GetTicks()) / 1000.0f * glm::radians(50.0f),
+    //     glm::vec3(0.5f, 1.0f, 0.0f));
     // const glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f),
     //     glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
     glm::mat4 view = glm::mat4(1.0f);
     lCamera.Update();
     view = lCamera.GetViewMatrix(view);
@@ -369,28 +367,64 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
+    glm::mat4 model = glm::mat4(1.0f);
+
     // ====== GEOMETRY PASS ======
     geometryBuffer->bind();
     geometryProgram->use();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     geometryBuffer->drawBuffers({GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1});
-    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
     geometryProgram->setMatrix4fv("uView", glm::value_ptr(view));
     geometryProgram->setMatrix4fv("uProjection", glm::value_ptr(projection));
+    geometryProgram->set1i("bIsWater", false);
+
+    /// Trunk
+    geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.55, 0.27, 0.07, 1.0)));
+    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    geometryProgram->set1f("uRoughness", 0.85f); // Set roughness for the cube
+    Draw3DCube();
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
+    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    
+    /// Leaves
+    geometryProgram->set1f("uRoughness", 0.75f); // Set roughness for the cube
     geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.11, 0.32, 0.22, 1.0)));
-    geometryProgram->set1i("bIsPlane", false);
-    geometryProgram->set1f("uRoughness", 0.8f); // Set roughness for the cube
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 0.0f));
+    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 2.0f, 0.0f));
+    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.0f));
+    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, -2.0f));
+    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.0f, 0.0f));
+    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
     Draw3DCube();
 
+    /// Water plane
     model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.7f, 0.7f));
     geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
     // rgb(169, 225, 253)
     geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.66, 0.88, 1.0, 1.0)));
-    geometryProgram->set1i("bIsPlane", true);
+    geometryProgram->set1i("bIsWater", true);
     geometryProgram->set1f("iTime", GetTime());
     geometryProgram->set1f("uRoughness", 0.05f); // Set roughness for the plane
     Draw3DPlane();
+
+    /// Ground plane
+    // model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.5f, 0.7f));
+    // geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    // // rgb(143, 105, 35)
+    // geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.56, 0.41, 0.14, 1.0)));
+    // geometryProgram->set1i("bIsWater", false);
+    // geometryProgram->set1f("uRoughness", 0.9f); // Set roughness for the plane
+    // Draw3DPlane();
+    
     geometryBuffer->unbind();
 
     // ====== DISPLAY PASS ======
