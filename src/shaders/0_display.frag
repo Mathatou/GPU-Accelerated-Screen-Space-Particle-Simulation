@@ -8,9 +8,14 @@ layout(binding  = 2) uniform sampler2D uDepthTex;
 layout(location = 1) uniform mat4 uView;
 layout(location = 2) uniform mat4 uProjection;
 layout(location = 3) uniform vec3 uCameraPos;
-
+layout(location = 4) uniform vec3 F0;
 layout(location = 0)out vec4 outScreenColor;
 
+
+vec3 FresnelSchlick(vec3 pNormal, vec3 pIncidence, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow((1.0 - clamp(dot(pNormal, pIncidence), 0.0, 1.0)), 5.0);
+}
 
 void main()
 {
@@ -31,11 +36,15 @@ void main()
 
     vec3 incidence = normalize(worldPos - uCameraPos.xyz);
     vec3 surfaceNormal = normalize(texture(uNormalTex,vTexCoord).xyz);
+    vec3 viewDir = normalize(uCameraPos.xyz - worldPos);
+    vec3 fresnel = FresnelSchlick(surfaceNormal, viewDir, F0);
     vec3 rayDir = reflect(incidence, surfaceNormal);
     
     float stepSize = 0.1; // Adjust step size as needed
     float thickness = 0.05;
     vec4 reflectionColor = vec4(0.0); 
+    float roughness = texture(uNormalTex, vTexCoord).a;
+
     float mixFactor = 0;
 
     vec3 currentRayPos = worldPos; // Start from the current world position
@@ -68,13 +77,13 @@ void main()
         if(sampledDepth < newClipSpacePos.z && sampledDepth > newClipSpacePos.z - thickness)
         {
             reflectionColor = texture(uColorTex, newTexCoord);
-            mixFactor = 0.35*edgeFade*distanceFade;
+            reflectionColor*= 1.0 - roughness;
+            mixFactor = 0.85*edgeFade*distanceFade;
             break;
         }
     }
-    float roughness = texture(uNormalTex, vTexCoord).a;
-    reflectionColor*= 1-roughness;
+    vec4 finalColor = mix(baseColor, reflectionColor, fresnel.r);
             
     // If no surface was hit, output a default color (e.g., black)
-    outScreenColor = mix(baseColor, reflectionColor, mixFactor); // Blend the reflection with the base color
+    outScreenColor = mix(baseColor, finalColor, mixFactor); // Blend the reflection with the base color
 }
