@@ -82,8 +82,8 @@ void main()
             break;
         }
     }
-    vec4 finalColor = mix(baseColor, reflectionColor, fresnel.r);
+    float reflectionFactor = fresnel.r * mixFactor;
             
     // If no surface was hit, output a default color (e.g., black)
-    outScreenColor = mix(baseColor, finalColor, mixFactor); // Blend the reflection with the base color
+    outScreenColor = mix(baseColor, reflectionColor, reflectionFactor); // Blend the reflection with the base color
 }

@@ -15,11 +15,13 @@ void main()
     vec4 worldPosition = uModel * vec4(inPosition, 1.0);
     if(bIsWater)
     {
-        float wave1 = 0.07 +0.07 * sin(iTime * 2.0 + worldPosition.x * 1.5);
-        float wave2 = 0.03 +0.07 * sin(iTime * 3.5 + worldPosition.z * 3);
+        const float wave1Amplitude = 0.03;
+        const float wave2Amplitude = 0.02;
+        float wave1 = 0.07 + wave1Amplitude * sin(iTime * 2.0 + worldPosition.x * 1.5);
+        float wave2 = 0.03 + wave2Amplitude * sin(iTime * 3.5 + worldPosition.z * 3);
         worldPosition.y += wave1 + wave2; // Add a sine wave effect to the y-coordinate
-        float dYdx = 0.07 +0.07* 1.5 * cos(iTime * 2.0 + worldPosition.x * 1.5);
-        float dYdz = 0.03 +0.07* 3.0 * cos(iTime * 3.5 + worldPosition.z * 3);
+        float dYdx = wave1Amplitude * 1.5 * cos(iTime * 2.0 + worldPosition.x * 1.5);
+        float dYdz = wave2Amplitude * 3.0 * cos(iTime * 3.5 + worldPosition.z * 3);
         vNormal = normalize(vec3(-dYdx, 1.0, -dYdz)); // Calculate the normal based on the wave derivatives
     }
     else

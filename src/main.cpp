@@ -6,7 +6,7 @@
 #pragma endregion
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
-#define PARTICLE_NUMBER 10000
+#define PARTICLE_NUMBER 1
 
 #pragma region Application State
 int windowWidth = WINDOW_WIDTH;
@@ -144,7 +144,7 @@ int main()
             if(pressed)
                 lScene.lCamera.OnKeyboardInput(key, deltaTime);
         }
-        
+
         lScene.DrawScene(windowWidth, windowHeight);
         SDL_GL_SwapWindow(lWindow);
         
