@@ -380,6 +380,7 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     geometryProgram->setMatrix4fv("uProjection", glm::value_ptr(projection));
     geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.11, 0.32, 0.22, 1.0)));
     geometryProgram->set1i("bIsPlane", false);
+    geometryProgram->set1f("uRoughness", 0.8f); // Set roughness for the cube
     Draw3DCube();
 
     model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.7f, 0.7f));
@@ -388,6 +389,7 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.26, 0.74, 0.97, 1.0)));
     geometryProgram->set1i("bIsPlane", true);
     geometryProgram->set1f("iTime", GetTime());
+    geometryProgram->set1f("uRoughness", 0.05f); // Set roughness for the plane
     Draw3DPlane();
     geometryBuffer->unbind();
 

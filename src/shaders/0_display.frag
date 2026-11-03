@@ -14,14 +14,14 @@ layout(location = 0)out vec4 outScreenColor;
 
 void main()
 {
+    
     vec4 baseColor = texture(uColorTex, vTexCoord);
     float depthValue = texture(uDepthTex, vTexCoord).r;
     if(depthValue >= 1.0) // Assuming 1.0 indicates no geometry
     {
         outScreenColor = baseColor; // Output the base color directly
         return;
-    }
-
+    }    
     // Convert depth from [0, 1] to [-1, 1]
     float zNDC = depthValue * 2.0 - 1.0; // Assuming depth is stored in the red channel
     vec4 clipSpacePos = vec4(vTexCoord*2.0 - 1.0, zNDC,1.0f); 
@@ -72,6 +72,9 @@ void main()
             break;
         }
     }
+    float roughness = texture(uNormalTex, vTexCoord).a;
+    reflectionColor*= 1-roughness;
+            
     // If no surface was hit, output a default color (e.g., black)
     outScreenColor = mix(baseColor, reflectionColor, mixFactor); // Blend the reflection with the base color
 }

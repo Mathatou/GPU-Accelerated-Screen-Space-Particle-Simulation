@@ -88,7 +88,6 @@ void main()
     if(index >= particles.length()) return;
 
     Particle vParticle = particles[index];
-
     // https://gamedev.stackexchange.com/questions/8718/glsl-how-do-i-cast-a-float-to-an-int
     highp int intDeltatime = int(uDeltaTime * 1000.0); // Convert delta time to milliseconds
     uint seed = index * intDeltatime; // Create a seed based on index and delta time

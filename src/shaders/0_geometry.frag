@@ -2,11 +2,12 @@
 in vec3 vNormal;
 
 layout(location = 0)out vec4 outColor;
-layout(location = 1)out vec4 outNormal;
+layout(location = 1)out vec4 outNormal_roughness;
 uniform vec4 uColor;
+uniform float uRoughness;
 
 void main()
 {
     outColor = uColor;
-    outNormal = vec4(normalize(vNormal), 1.0);
+    outNormal_roughness = vec4(normalize(vNormal), uRoughness);
 }
