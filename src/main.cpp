@@ -145,7 +145,6 @@ int main()
                 lScene.lCamera.OnKeyboardInput(key, deltaTime);
         }
         
-
         lScene.DrawScene(windowWidth, windowHeight);
         SDL_GL_SwapWindow(lWindow);
         
@@ -153,13 +152,11 @@ int main()
         if(FPSDebugMode)
         {
             frameCount++;
-            if(deltaTime >=1.f)
-            {
-                FPS = frameCount/deltaTime;
-                std::cout << "FPS: " << FPS << std::endl; // Multiply by 2 because we measure over 1.0 seconds
-                frameCount = 0;
-                lTimer = currentFrame;
-            }
+            FPS = frameCount/deltaTime;
+            std::cout << "FPS: " << FPS << std::endl; // Multiply by 2 because we measure over 1.0 seconds
+            frameCount = 0;
+            lTimer = currentFrame;
+        
         }
         #pragma endregion
     }

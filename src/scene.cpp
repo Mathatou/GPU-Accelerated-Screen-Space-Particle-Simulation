@@ -367,7 +367,10 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    float TreeOffsetX = 3.2f;
+    float TreeOffsetY = 1.f;
     glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(TreeOffsetX, TreeOffsetY, 0.0f));
 
     // ====== GEOMETRY PASS ======
     geometryBuffer->bind();
@@ -380,29 +383,30 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
 
     /// Trunk
     geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.55, 0.27, 0.07, 1.0)));
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 0.0f-TreeOffsetY, 0.0f));
     geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
     geometryProgram->set1f("uRoughness", 0.85f); // Set roughness for the cube
     Draw3DCube();
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 2.0f-TreeOffsetY, 0.0f));
     geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
     Draw3DCube();
     
     /// Leaves
     geometryProgram->set1f("uRoughness", 0.75f); // Set roughness for the cube
     geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.11, 0.32, 0.22, 1.0)));
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 0.0f));
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX + 2.0f, 2.0f-TreeOffsetY, 0.0f));
     geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
     Draw3DCube();
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 2.0f, 0.0f));
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f+TreeOffsetX, 2.0f-TreeOffsetY, 0.0f));
     geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
     Draw3DCube();
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.0f));
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 2.0f-TreeOffsetY, 2.0f));
     geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
     Draw3DCube();
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, -2.0f));
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 2.0f-TreeOffsetY, -2.0f));
     geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
     Draw3DCube();
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.0f, 0.0f));
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 4.0f-TreeOffsetY, 0.0f));
     geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
     Draw3DCube();
 
@@ -417,19 +421,24 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     Draw3DPlane();
 
     /// Ground plane
-    // model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.5f, 0.7f));
-    // geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    // // rgb(143, 105, 35)
-    // geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.56, 0.41, 0.14, 1.0)));
-    // geometryProgram->set1i("bIsWater", false);
-    // geometryProgram->set1f("uRoughness", 0.9f); // Set roughness for the plane
-    // Draw3DPlane();
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(-7.0f, .0f, 0.7f));
+    model = glm::scale(model, glm::vec3(.50f, 2.5f, 1.1f));
+    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    // rgb(143, 105, 35)
+    geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.56, 0.41, 0.14, 1.0)));
+    geometryProgram->set1i("bIsWater", false);
+    geometryProgram->set1f("uRoughness", 0.9f); // Set roughness for the plane
+    Draw3DPlane();
+
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(7.0f, .0f, 0.7f));
+    model = glm::scale(model, glm::vec3(.50f, 2.5f, 1.1f));
+    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DPlane();
     
     geometryBuffer->unbind();
 
     // ====== DISPLAY PASS ======
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // SSRProgram->use();
     displayProgram->use();
     normalTexture->bind(0);
     colorTexture->bind(1);

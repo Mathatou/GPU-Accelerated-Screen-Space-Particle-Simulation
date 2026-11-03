@@ -8,7 +8,7 @@ Camera::Camera()
 
 void Camera::Reset()
 {
-    position = glm::vec3(0.0f, 0.0f, 5.0f);
+    position = glm::vec3(0.0f, 0.0f, 15.0f);
     worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
     yaw = glm::radians(-90.0f);
     pitch = 0.0f;
