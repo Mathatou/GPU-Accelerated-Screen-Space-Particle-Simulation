@@ -2,11 +2,15 @@
 #include "scene.hpp"
 
 #include <iostream>
+#include "../libs/imgui-master/imgui.h"
+#include "../libs/imgui-master/backends/imgui_impl_sdl3.h"
+#include "../libs/imgui-master/backends/imgui_impl_opengl3.h"
+
 #include <map>
 #pragma endregion
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
-#define PARTICLE_NUMBER 1
+#define PARTICLE_NUMBER 1000
 
 #pragma region Application State
 int windowWidth = WINDOW_WIDTH;
@@ -85,6 +89,10 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
     #pragma region Camera Controls
     if(pEvent.type == SDL_EVENT_MOUSE_MOTION)
     {
+        if(!isMouseRelative)
+            return;
+        // if(ImGui::GetIO().WantCaptureMouse && !isMouseRelative)
+        //     return; // Ignore mouse motion events when ImGui wants to capture the mouse
         float xoffset = static_cast<float>(pEvent.motion.xrel);
         float yoffset = static_cast<float>(pEvent.motion.yrel);
         lScene.lCamera.OnMouseMove(xoffset, yoffset);
@@ -108,12 +116,22 @@ int main()
     SDL_Window* lWindow = nullptr;
     SDL_GLContext context = nullptr;
     lScene.Initialise(&lWindow, &context, windowWidth, windowHeight, "Particle Sim");
-    SDL_SetWindowRelativeMouseMode(lWindow, true); // Enable relative mouse mode for capturing mouse movement
     if(!lScene.isSceneInitialized())
     {
         std::cerr << "Scene initialization failed. Exiting..." << std::endl;
         return 1;
     }
+
+    SDL_SetWindowRelativeMouseMode(lWindow, true);
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+
+    ImGui_ImplSDL3_InitForOpenGL(lWindow, context);
+    ImGui_ImplOpenGL3_Init();
 
     if(lWindow == nullptr || context == nullptr)
     {
@@ -131,9 +149,14 @@ int main()
         SDL_Event event;
         while(SDL_PollEvent(&event))
         {
+            if(!isMouseRelative)
+            {
+                ImGui_ImplSDL3_ProcessEvent(&event);
+            }
             HandleEvent(event, running);
         }
         
+        #pragma region Keyboard Input Handling
         const auto currentFrame = SDL_GetPerformanceCounter();
         const float deltaTime = static_cast<float>(currentFrame - previousFrame) /
             static_cast<float>(lFrequency);
@@ -144,9 +167,16 @@ int main()
             if(pressed)
                 lScene.lCamera.OnKeyboardInput(key, deltaTime);
         }
+        #pragma endregion
+
+        // (After event loop)
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
+        ImGui::ShowDemoWindow(); // Show demo window! :)
 
         lScene.DrawScene(windowWidth, windowHeight);
-        SDL_GL_SwapWindow(lWindow);
         
         #pragma region FPS Calculation
         if(FPSDebugMode)
@@ -159,9 +189,20 @@ int main()
         
         }
         #pragma endregion
+        // Rendering
+        // (Your code clears your framebuffer, renders your other stuff etc.)
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        // (Your code calls SDL_GL_SwapWindow() etc.)
+        SDL_GL_SwapWindow(lWindow);
     }
 
     lScene.Cleanup(lWindow, context);
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();
+
     return 0;
 }
 #pragma endregion
