@@ -313,7 +313,8 @@ void Scene::Draw3DPlane()
 
 void Scene::DrawParticles(glm::mat4 const& view, 
     glm::mat4 const& projection,
-    glm::mat4 const& model
+    glm::mat4 const& model,
+    int pActiveParticleCount
 )
 {
     particleProgram->use();
@@ -322,9 +323,10 @@ void Scene::DrawParticles(glm::mat4 const& view,
     particleProgram->setMatrix4fv("uView",glm::value_ptr(view));
     particleProgram->setMatrix4fv("uProjection",glm::value_ptr(projection));
     particleProgram->setMatrix4fv("uModel",glm::value_ptr(model));
+    // particleProgram->set1i("uActiveParticleCount", pActiveParticleCount);
     glDisable(GL_DEPTH_TEST);
     emptyVAO->bind();
-    glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(lParticles.size()));
+    glDrawArrays(GL_POINTS, 0, pActiveParticleCount);
     emptyVAO->unbind();
     glEnable(GL_DEPTH_TEST);
 }
@@ -332,7 +334,7 @@ void Scene::DrawParticles(glm::mat4 const& view,
 
 /// @brief Draw the 3D scene, including the cube, plane, and particles. 
 /// Updates particle states and resets them if they are no longer alive. 
-void Scene::DrawScene(int windowWidth, int windowHeight)
+void Scene::DrawScene(int windowWidth, int windowHeight, int pActiveParticleCount)
 {
     // glm::mat4 model = glm::rotate(glm::mat4(1.0f),
     //     static_cast<float>(SDL_GetTicks()) / 1000.0f * glm::radians(50.0f),
@@ -358,9 +360,10 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     normalTexture->bind(0);
     colorTexture->bind(1);
     depthTexture->bind(2);
+    computeProgram->set1i("uActiveParticleCount", pActiveParticleCount);
     
     // Compute the number of work groups needed based on the number of particles
-    const GLuint workGroupCount = static_cast<GLuint>((lParticles.size() + 255) / 256);
+    const GLuint workGroupCount = static_cast<GLuint>((pActiveParticleCount + 255) / 256);
     computeProgram->dispatch(workGroupCount, 1, 1);
     // Ensure that the compute shader has finished writing to the SSBO before rendering
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
@@ -453,7 +456,7 @@ void Scene::DrawScene(int windowWidth, int windowHeight)
     
     model = glm::mat4(1.0f);
     
-    DrawParticles(view, projection, model);
+    DrawParticles(view, projection, model, pActiveParticleCount);
 
 
     #pragma endregion

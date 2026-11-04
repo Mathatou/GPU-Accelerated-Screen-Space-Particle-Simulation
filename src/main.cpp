@@ -10,7 +10,7 @@
 #pragma endregion
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
-#define PARTICLE_NUMBER 1000
+#define MAX_PARTICLE_NUMBER 1000000
 
 #pragma region Application State
 int windowWidth = WINDOW_WIDTH;
@@ -91,8 +91,6 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
     {
         if(!isMouseRelative)
             return;
-        // if(ImGui::GetIO().WantCaptureMouse && !isMouseRelative)
-        //     return; // Ignore mouse motion events when ImGui wants to capture the mouse
         float xoffset = static_cast<float>(pEvent.motion.xrel);
         float yoffset = static_cast<float>(pEvent.motion.yrel);
         lScene.lCamera.OnMouseMove(xoffset, yoffset);
@@ -141,9 +139,13 @@ int main()
 
     lScene.InitCube();
     lScene.InitPlane();
-    lScene.InitParticle(PARTICLE_NUMBER); // Initialize 100,000 particles
+    lScene.InitParticle(MAX_PARTICLE_NUMBER); // Initialize 100,000 particles
     bool running = true;
     auto previousFrame = SDL_GetPerformanceCounter();
+    int activeParticleCount = 0; 
+    int maxParticleCount = MAX_PARTICLE_NUMBER; // Maximum number of particles
+    
+    #pragma region Main Loop
     while(running)
     {
         SDL_Event event;
@@ -178,9 +180,10 @@ int main()
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
-        ImGui::ShowDemoWindow(); // Show demo window! :)
-
-        lScene.DrawScene(windowWidth, windowHeight);
+        ImGui::Begin("Scene Parameters");
+        ImGui::SliderInt("Particles number", &activeParticleCount, 1, maxParticleCount);
+        ImGui::End();
+        lScene.DrawScene(windowWidth, windowHeight, activeParticleCount);
         
         #pragma region FPS Calculation
         if(FPSDebugMode)
@@ -194,13 +197,11 @@ int main()
         }
         #pragma endregion
         // Rendering
-        // (Your code clears your framebuffer, renders your other stuff etc.)
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        // (Your code calls SDL_GL_SwapWindow() etc.)
         SDL_GL_SwapWindow(lWindow);
     }
-
+    #pragma endregion
     lScene.Cleanup(lWindow, context);
 
     ImGui_ImplOpenGL3_Shutdown();

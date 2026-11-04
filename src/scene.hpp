@@ -47,7 +47,7 @@ class Scene
         void Draw3DPlane();
 
         /// @brief Updates particles and renders the complete scene.
-        void DrawScene(int windowWidth, int windowHeight);
+        void DrawScene(int windowWidth, int windowHeight, int pActiveParticleCount);
         
         Camera lCamera; // Camera object for view and projection matrices
 
@@ -90,7 +90,9 @@ class Scene
         /// @brief Draws the particles in the scene.
         void DrawParticles(glm::mat4 const& view, 
             glm::mat4 const& projection,
-            glm::mat4 const& model);
+            glm::mat4 const& model,
+            int pActiveParticleCount
+        );
         std::vector<Particle> lParticles; // Vector to hold particles
 
 };

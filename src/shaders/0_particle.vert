@@ -17,6 +17,7 @@ layout(std430, binding = 0) buffer ParticleBufferData
 uniform mat4 uModel;
 uniform mat4 uView;
 uniform mat4 uProjection;
+uniform int uActiveParticleCount; // Number of active particles
 
 void main()
 {
