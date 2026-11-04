@@ -180,8 +180,13 @@ int main()
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
+        ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Once);
+        ImGui::SetNextWindowSize(ImVec2(windowWidth*0.45f, windowHeight*0.25f), ImGuiCond_Once);
+        ImGui::GetIO().FontGlobalScale = 1.5f;
         ImGui::Begin("Scene Parameters");
-        ImGui::SliderInt("Particles number", &activeParticleCount, 1, maxParticleCount);
+        ImGui::Text("Particles number : ");
+        ImGui::SliderInt("##", &activeParticleCount, 1, maxParticleCount);
+        ImGui::Text("FPS: %.1f", FPS);
         ImGui::End();
         lScene.DrawScene(windowWidth, windowHeight, activeParticleCount);
         
