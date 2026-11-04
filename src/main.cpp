@@ -149,7 +149,11 @@ int main()
         SDL_Event event;
         while(SDL_PollEvent(&event))
         {
-            if(!isMouseRelative)
+            bool isMouseEvent = (event.type == SDL_EVENT_MOUSE_MOTION || 
+                        event.type == SDL_EVENT_MOUSE_WHEEL || 
+                        event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || 
+                        event.type == SDL_EVENT_MOUSE_BUTTON_UP);
+            if(!isMouseRelative || !isMouseEvent)
             {
                 ImGui_ImplSDL3_ProcessEvent(&event);
             }
