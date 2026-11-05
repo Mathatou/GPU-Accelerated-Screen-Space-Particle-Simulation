@@ -334,7 +334,7 @@ void Scene::DrawParticles(glm::mat4 const& view,
 
 /// @brief Draw the 3D scene, including the cube, plane, and particles. 
 /// Updates particle states and resets them if they are no longer alive. 
-void Scene::DrawScene(int windowWidth, int windowHeight, int pActiveParticleCount)
+void Scene::DrawScene(int windowWidth, int windowHeight, int pActiveParticleCount, glm::vec3 pParticleColor, bool pIsColorManual)
 {
     // glm::mat4 model = glm::rotate(glm::mat4(1.0f),
     //     static_cast<float>(SDL_GetTicks()) / 1000.0f * glm::radians(50.0f),
@@ -361,15 +361,19 @@ void Scene::DrawScene(int windowWidth, int windowHeight, int pActiveParticleCoun
     colorTexture->bind(1);
     depthTexture->bind(2);
     computeProgram->set1i("uActiveParticleCount", pActiveParticleCount);
+    computeProgram->set3fv("uParticleColor", glm::value_ptr(pParticleColor));
+    computeProgram->set1i("uIsColorManual", pIsColorManual ? 1 : 0);
     
     // Compute the number of work groups needed based on the number of particles
     const GLuint workGroupCount = static_cast<GLuint>((pActiveParticleCount + 255) / 256);
     computeProgram->dispatch(workGroupCount, 1, 1);
+
     // Ensure that the compute shader has finished writing to the SSBO before rendering
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
     
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    /// ====== SCENE SETUP  ======
     float TreeOffsetX = 3.2f;
     float TreeOffsetY = 1.f;
     glm::mat4 model = glm::mat4(1.0f);

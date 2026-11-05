@@ -45,9 +45,8 @@ class Scene
 
         /// @brief Draws the plane using its configured vertex array.
         void Draw3DPlane();
-
         /// @brief Updates particles and renders the complete scene.
-        void DrawScene(int windowWidth, int windowHeight, int pActiveParticleCount);
+        void DrawScene(int windowWidth, int windowHeight, int pActiveParticleCount, glm::vec3 particleColor, bool isColorManual);
         
         Camera lCamera; // Camera object for view and projection matrices
 

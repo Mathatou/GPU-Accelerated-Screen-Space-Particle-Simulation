@@ -22,6 +22,7 @@ float FPS = 0.f;
 bool FPSDebugMode = true;
 bool isFullScreen = false;
 bool isMouseRelative = true;
+bool isColorManual = false;
 Scene lScene;
 std::map<int, bool> keys;
 #pragma endregion
@@ -77,6 +78,10 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
         {
             SDL_SetWindowFullscreen(SDL_GL_GetCurrentWindow(), SDL_WINDOW_FULLSCREEN);
         }
+    }
+    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_F10)
+    {
+        isColorManual = !isColorManual;
     }
     if(pEvent.type == SDL_EVENT_WINDOW_RESIZED)
     {
@@ -143,6 +148,10 @@ int main()
     bool running = true;
     auto previousFrame = SDL_GetPerformanceCounter();
     int activeParticleCount = 0; 
+    float rColor = 0.0f;
+    float gColor = 0.0f;
+    float bColor = 1.0f;
+    glm::vec3 particleColor(rColor, gColor, bColor);
     int maxParticleCount = MAX_PARTICLE_NUMBER; // Maximum number of particles
     
     #pragma region Main Loop
@@ -185,17 +194,29 @@ int main()
         ImGui::GetIO().FontGlobalScale = 1.5f;
         ImGui::Begin("Scene Parameters");
         ImGui::Text("Particles number : ");
-        ImGui::SliderInt("##", &activeParticleCount, 1, maxParticleCount);
+        ImGui::SliderInt("##0", &activeParticleCount, 1, maxParticleCount);
+        ImGui::Checkbox("Manual Color", &isColorManual);
+        if(isColorManual)
+        {
+            // std::cout << "Manual color mode enabled. ("<< isColorManual << ")" << std::endl;
+            ImGui::Text("R Color : ");
+            ImGui::SliderFloat("##1", &rColor, 0.f, 1.f);
+            ImGui::Text("B Color : ");
+            ImGui::SliderFloat("##2", &bColor, 0.f, 1.f);
+            ImGui::Text("G Color : ");
+            ImGui::SliderFloat("##3", &gColor, 0.f, 1.f);
+        }
         ImGui::Text("FPS: %.1f", FPS);
         ImGui::End();
-        lScene.DrawScene(windowWidth, windowHeight, activeParticleCount);
+        particleColor = glm::vec3(rColor, gColor, bColor);
+        lScene.DrawScene(windowWidth, windowHeight, activeParticleCount, particleColor, isColorManual);
         
         #pragma region FPS Calculation
         if(FPSDebugMode)
         {
             frameCount++;
             FPS = frameCount/deltaTime;
-            std::cout << "FPS: " << FPS << std::endl; // Multiply by 2 because we measure over 1.0 seconds
+            // std::cout << "FPS: " << FPS << std::endl; // Multiply by 2 because we measure over 1.0 seconds
             frameCount = 0;
             lTimer = currentFrame;
         

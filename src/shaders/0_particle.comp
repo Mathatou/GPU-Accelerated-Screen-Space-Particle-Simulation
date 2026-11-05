@@ -20,6 +20,8 @@ layout(binding = 2) uniform sampler2D uDepthTex;
 layout(location = 1) uniform mat4 uView;
 layout(location = 2) uniform mat4 uProjection;
 layout(location = 3) uniform int uActiveParticleCount; // Number of active particles
+layout(location = 4) uniform vec3 uParticleColor; // Color of the particles
+layout(location = 5) uniform int uIsColorManual; // Flag to determine if the color is manual or from the texture
 
 
 void Update(float deltaTime, inout Particle pParticle, uint pIndex)
@@ -63,7 +65,7 @@ void ResetParticle(inout Particle pParticle, inout uint seed)
         randomRange(seed, -15.0,  15.0),  // Random x position between -5 and 5
         randomRange(seed,  5.0,   10.0),  // Random y position between -5 and 5
         randomRange(seed, -15.0,  15.0),  // Random z position between -5 and 5
-        2.0                          // Reset lifetime to 1 second
+        1.5                          // Reset lifetime to 1 second
     );
 
     pParticle.velocity_size = vec4(
@@ -72,13 +74,20 @@ void ResetParticle(inout Particle pParticle, inout uint seed)
         0,  // Random z velocity between -1 and 1
         randomRange(seed, 0.1, 0.3) * 10.0  // Random size between 1 and 3
     );
-
-    pParticle.color = vec4(
+    if(uIsColorManual == 0)
+    {
+        pParticle.color = vec4(
         0,                 // Random red component (0.0 to 1.0)
         0,                 // Random green component (0.0 to 1.0)
         randomFloat(seed)*0.5 + 0.5, // Random blue component (0.5 to 1.0)
         1.0                // Full opacity
     );
+    }
+    else
+    {
+        pParticle.color = vec4(uParticleColor,1.0);
+    }
+    
 }
 
 
