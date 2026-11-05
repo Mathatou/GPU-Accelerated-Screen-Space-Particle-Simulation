@@ -48,7 +48,9 @@ void main()
     float mixFactor = 0;
 
     vec3 currentRayPos = worldPos; // Start from the current world position
-    for(int i = 0; i < 100; ++i)
+    // With 300 fps drops to 30
+    // 200 fps drops to ~45
+    for(int i = 0; i < 150; ++i)
     {
         // Move the ray forward in the reflected direction
         currentRayPos += rayDir * stepSize; // Adjust step size as needed

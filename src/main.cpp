@@ -7,6 +7,7 @@
 #include "../libs/imgui-master/backends/imgui_impl_opengl3.h"
 
 #include <map>
+#include <algorithm>
 #pragma endregion
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
@@ -19,7 +20,7 @@ auto lTimer = SDL_GetPerformanceCounter();
 auto lFrequency = SDL_GetPerformanceFrequency();
 int frameCount = 0;
 float FPS = 0.f;
-bool FPSDebugMode = true;
+bool HelpWindowOpened = true;
 bool isFullScreen = false;
 bool isMouseRelative = true;
 bool isColorManual = false;
@@ -47,14 +48,14 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
             lScene.lCamera.Reset();
         }
     }
+    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_H)
+    {
+        std::cout << "Help window opened." << std::endl;
+        HelpWindowOpened = !HelpWindowOpened;
+    }
     if(pEvent.type == SDL_EVENT_KEY_UP)
     {
         keys[pEvent.key.key] = false;
-    }
-    if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_F5)
-    {
-        std::cout << "Switching fps counter display mode." << std::endl;
-        FPSDebugMode = !FPSDebugMode;
     }
     if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_F11)
     {
@@ -91,6 +92,7 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
         
         ge::gl::glViewport(0, 0, windowWidth, windowHeight);
     }
+    
     #pragma region Camera Controls
     if(pEvent.type == SDL_EVENT_MOUSE_MOTION)
     {
@@ -189,44 +191,91 @@ int main()
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
+        const float guiWindowWidth = std::clamp(windowWidth * 0.45f, 480.0f, 640.0f);
+        const float sceneWindowHeight = isColorManual
+            ? std::clamp(windowHeight * 0.55f, 420.0f, 560.0f)
+            : std::clamp(windowHeight * 0.25f, 220.0f, 320.0f);
+        const float helpWindowHeight = std::clamp(windowHeight * 0.45f, 320.0f, 480.0f);
+
         ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Once);
-        ImGui::SetNextWindowSize(ImVec2(windowWidth*0.45f, windowHeight*0.25f) );
-        if(isColorManual)
-            ImGui::SetNextWindowSize(ImVec2(windowWidth*0.45f, windowHeight*0.55f));
+        ImGui::SetNextWindowSize(ImVec2(guiWindowWidth, sceneWindowHeight));
 
         ImGui::GetIO().FontGlobalScale = 1.5f;
         ImGui::Begin("Scene Parameters");
         ImGui::Text("Particles number : ");
         ImGui::SliderInt("##0", &activeParticleCount, 1, maxParticleCount);
-        ImGui::Checkbox("Manual Color", &isColorManual);
-        if(isColorManual)
+        ImGui::Spacing();
+
+        if(ImGui::CollapsingHeader("Particle Color Parameters"))
         {
-            // std::cout << "Manual color mode enabled. ("<< isColorManual << ")" << std::endl;
-            ImGui::Text("R Color : ");
-            ImGui::SliderFloat("##1", &rColor, 0.f, 1.f);
-            ImGui::Text("B Color : ");
-            ImGui::SliderFloat("##2", &bColor, 0.f, 1.f);
-            ImGui::Text("G Color : ");
-            ImGui::SliderFloat("##3", &gColor, 0.f, 1.f);
+            ImGui::Checkbox("Manual Color", &isColorManual);
+            if(isColorManual)
+            {
+                // std::cout << "Manual color mode enabled. ("<< isColorManual << ")" << std::endl;
+                ImGui::Text("R Color : ");
+                ImGui::SliderFloat("##1", &rColor, 0.f, 1.f);
+                ImGui::Text("G Color : ");
+                ImGui::SliderFloat("##3", &gColor, 0.f, 1.f);
+                ImGui::Text("B Color : ");
+                ImGui::SliderFloat("##2", &bColor, 0.f, 1.f);
+                
+                // Particles colors presets
+                ImGui::NewLine();
+                if(ImGui::Button("Snow Preset"))
+                {
+                    rColor = 0.845f;
+                    bColor = 0.951f;
+                    gColor = 0.880f;
+                }
+                if(ImGui::Button("Default/Rain"))
+                {
+                    rColor = 0.f;
+                    bColor = 1.f;
+                    gColor = 0.f;
+                }
+                ImGui::NewLine();
+                
+            }
+
         }
+        ImGui::Spacing();
         ImGui::Text("FPS: %.1f", FPS);
         ImGui::End();
+
+        if(HelpWindowOpened)
+        {
+            ImGui::SetNextWindowPos(
+                ImVec2(std::max(10.0f, static_cast<float>(windowWidth) - guiWindowWidth - 10.0f), 10.0f)
+            );
+            ImGui::SetNextWindowSize(ImVec2(guiWindowWidth, helpWindowHeight));
+            ImGui::Begin("Help Window");
+            ImGui::Text("Controls:");
+            ImGui::Text("Z/Q/S/D: Move camera");
+            ImGui::Text("Mouse: Look around");
+            ImGui::Text("Mouse Wheel: Accelerate or decelerate camera speed");
+            ImGui::Text("F1: Toggle mouse relative mode");
+            ImGui::Text("F10: Toggle manual color mode");
+            ImGui::Text("F11: Toggle fullscreen mode");
+            ImGui::Text("H: Toggle this help window");
+            ImGui::Text("R: Reset camera position");
+            ImGui::Text("ESC: Exit application");
+            ImGui::End();
+        }
+
+
         particleColor = glm::vec3(rColor, gColor, bColor);
         lScene.DrawScene(windowWidth, windowHeight, activeParticleCount, particleColor, isColorManual);
+        ImGui::Render();
         
         #pragma region FPS Calculation
-        if(FPSDebugMode)
-        {
-            frameCount++;
-            FPS = frameCount/deltaTime;
-            // std::cout << "FPS: " << FPS << std::endl; // Multiply by 2 because we measure over 1.0 seconds
-            frameCount = 0;
-            lTimer = currentFrame;
+        frameCount++;
+        FPS = frameCount/deltaTime;
+        // std::cout << "FPS: " << FPS << std::endl; // Multiply by 2 because we measure over 1.0 seconds
+        frameCount = 0;
+        lTimer = currentFrame;
         
-        }
         #pragma endregion
         // Rendering
-        ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(lWindow);
     }
