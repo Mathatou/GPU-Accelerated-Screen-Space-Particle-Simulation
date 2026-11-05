@@ -190,7 +190,10 @@ int main()
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
         ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Once);
-        ImGui::SetNextWindowSize(ImVec2(windowWidth*0.45f, windowHeight*0.25f), ImGuiCond_Once);
+        ImGui::SetNextWindowSize(ImVec2(windowWidth*0.45f, windowHeight*0.25f) );
+        if(isColorManual)
+            ImGui::SetNextWindowSize(ImVec2(windowWidth*0.45f, windowHeight*0.55f));
+
         ImGui::GetIO().FontGlobalScale = 1.5f;
         ImGui::Begin("Scene Parameters");
         ImGui::Text("Particles number : ");
