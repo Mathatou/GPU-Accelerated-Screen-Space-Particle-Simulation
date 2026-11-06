@@ -129,7 +129,7 @@ void main()
 
     Update(uDeltaTime, vParticle, index);
     
-    if(vParticle.position_lifetime.y <= -2.5 || vParticle.position_lifetime.w <= 0.0)
+    if(vParticle.position_lifetime.y <= -1.4 || vParticle.position_lifetime.w <= 0.0)
     {
         ResetParticle(vParticle, seed);
     }
