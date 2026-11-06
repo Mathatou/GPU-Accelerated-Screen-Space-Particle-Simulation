@@ -334,7 +334,7 @@ void Scene::DrawParticles(glm::mat4 const& view,
 
 /// @brief Draw the 3D scene, including the cube, plane, and particles. 
 /// Updates particle states and resets them if they are no longer alive. 
-void Scene::DrawScene(int windowWidth, int windowHeight, int pActiveParticleCount, glm::vec3 pParticleColor, bool pIsColorManual)
+void Scene::DrawScene(int windowWidth, int windowHeight, const SceneParameters& parameters)
 {
     // glm::mat4 model = glm::rotate(glm::mat4(1.0f),
     //     static_cast<float>(SDL_GetTicks()) / 1000.0f * glm::radians(50.0f),
@@ -360,12 +360,12 @@ void Scene::DrawScene(int windowWidth, int windowHeight, int pActiveParticleCoun
     normalTexture->bind(0);
     colorTexture->bind(1);
     depthTexture->bind(2);
-    computeProgram->set1i("uActiveParticleCount", pActiveParticleCount);
-    computeProgram->set3fv("uParticleColor", glm::value_ptr(pParticleColor));
-    computeProgram->set1i("uIsColorManual", pIsColorManual ? 1 : 0);
+    computeProgram->set1i("uActiveParticleCount", parameters.activeParticleCount);
+    computeProgram->set3fv("uParticleColor", glm::value_ptr(parameters.particleColor));
+    computeProgram->set1i("uIsColorManual", parameters.isColorManual ? 1 : 0);
     
     // Compute the number of work groups needed based on the number of particles
-    const GLuint workGroupCount = static_cast<GLuint>((pActiveParticleCount + 255) / 256);
+    const GLuint workGroupCount = static_cast<GLuint>((parameters.activeParticleCount + 255) / 256);
     computeProgram->dispatch(workGroupCount, 1, 1);
 
     // Ensure that the compute shader has finished writing to the SSBO before rendering
@@ -376,10 +376,9 @@ void Scene::DrawScene(int windowWidth, int windowHeight, int pActiveParticleCoun
     /// ====== SCENE SETUP  ======
     float TreeOffsetX = 3.2f;
     float TreeOffsetY = 1.f;
-    glm::vec3 lightDir = glm::normalize(glm::vec3(-0.5f, -1.0f, -0.3f));
-    glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    glm::vec3 lightPos = glm::vec3(5.0f, 5.0f, 5.0f);
-    float lightIntensity = 1.0f;
+    const glm::vec3 lightDir = glm::length(parameters.lightDirection) > 0.0001f
+        ? glm::normalize(parameters.lightDirection)
+        : glm::vec3(0.0f, -1.0f, 0.0f);
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(TreeOffsetX, TreeOffsetY, 0.0f));
     
@@ -388,9 +387,8 @@ void Scene::DrawScene(int windowWidth, int windowHeight, int pActiveParticleCoun
     geometryProgram->use();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     geometryProgram->set3fv("uLightDir", glm::value_ptr(lightDir));
-    geometryProgram->set4fv("uLightColor", glm::value_ptr(lightColor));
-    // geometryProgram->set3fv("uLightPos", glm::value_ptr(lightPos));
-    geometryProgram->set1f("uLightIntensity", lightIntensity);
+    geometryProgram->set4fv("uLightColor", glm::value_ptr(parameters.lightColor));
+    geometryProgram->set1f("uLightIntensity", parameters.lightIntensity);
     geometryBuffer->drawBuffers({GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1});
     geometryProgram->setMatrix4fv("uView", glm::value_ptr(view));
     geometryProgram->setMatrix4fv("uProjection", glm::value_ptr(projection));
@@ -468,7 +466,7 @@ void Scene::DrawScene(int windowWidth, int windowHeight, int pActiveParticleCoun
     
     model = glm::mat4(1.0f);
     
-    DrawParticles(view, projection, model, pActiveParticleCount);
+    DrawParticles(view, projection, model, parameters.activeParticleCount);
 
 
     #pragma endregion

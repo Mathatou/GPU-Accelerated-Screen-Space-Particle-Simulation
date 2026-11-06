@@ -6,6 +6,7 @@
 #include "../libs/imgui-master/backends/imgui_impl_sdl3.h"
 #include "../libs/imgui-master/backends/imgui_impl_opengl3.h"
 
+#include <glm/gtc/type_ptr.hpp>
 #include <map>
 #include <algorithm>
 #pragma endregion
@@ -20,10 +21,10 @@ auto lTimer = SDL_GetPerformanceCounter();
 auto lFrequency = SDL_GetPerformanceFrequency();
 int frameCount = 0;
 float FPS = 0.f;
-bool HelpWindowOpened = true;
+bool HelpWindowOpened = false;
 bool isFullScreen = false;
 bool isMouseRelative = true;
-bool isColorManual = false;
+SceneParameters sceneParameters;
 Scene lScene;
 std::map<int, bool> keys;
 #pragma endregion
@@ -82,7 +83,7 @@ void HandleEvent(const SDL_Event& pEvent, bool& running)
     }
     if(pEvent.type == SDL_EVENT_KEY_DOWN && pEvent.key.key == SDLK_F10)
     {
-        isColorManual = !isColorManual;
+        sceneParameters.isColorManual = !sceneParameters.isColorManual;
     }
     if(pEvent.type == SDL_EVENT_WINDOW_RESIZED)
     {
@@ -149,12 +150,8 @@ int main()
     lScene.InitParticle(MAX_PARTICLE_NUMBER); // Initialize 100,000 particles
     bool running = true;
     auto previousFrame = SDL_GetPerformanceCounter();
-    int activeParticleCount = 0; 
-    float rColor = 0.0f;
-    float gColor = 0.0f;
-    float bColor = 1.0f;
-    glm::vec3 particleColor(rColor, gColor, bColor);
     int maxParticleCount = MAX_PARTICLE_NUMBER; // Maximum number of particles
+    bool lightParametersOpen = false;
     
     #pragma region Main Loop
     while(running)
@@ -193,7 +190,7 @@ int main()
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
         const float guiWindowWidth = std::clamp(windowWidth * 0.45f, 480.0f, 640.0f);
-        const float sceneWindowHeight = isColorManual
+        const float sceneWindowHeight = (sceneParameters.isColorManual || lightParametersOpen)
             ? std::clamp(windowHeight * 0.55f, 420.0f, 560.0f)
             : std::clamp(windowHeight * 0.25f, 220.0f, 320.0f);
         const float helpWindowHeight = std::clamp(windowHeight * 0.45f, 320.0f, 480.0f);
@@ -204,40 +201,39 @@ int main()
         ImGui::GetIO().FontGlobalScale = 1.5f;
         ImGui::Begin("Scene Parameters");
         ImGui::Text("Particles number : ");
-        ImGui::SliderInt("##0", &activeParticleCount, 1, maxParticleCount);
+        ImGui::SliderInt("##0", &sceneParameters.activeParticleCount, 1, maxParticleCount);
         ImGui::Spacing();
 
         if(ImGui::CollapsingHeader("Particle Color Parameters"))
         {
-            ImGui::Checkbox("Manual Color", &isColorManual);
-            if(isColorManual)
+            ImGui::Checkbox("Manual Color", &sceneParameters.isColorManual);
+            if(sceneParameters.isColorManual)
             {
-                // std::cout << "Manual color mode enabled. ("<< isColorManual << ")" << std::endl;
-                ImGui::Text("R Color : ");
-                ImGui::SliderFloat("##1", &rColor, 0.f, 1.f);
-                ImGui::Text("G Color : ");
-                ImGui::SliderFloat("##3", &gColor, 0.f, 1.f);
-                ImGui::Text("B Color : ");
-                ImGui::SliderFloat("##2", &bColor, 0.f, 1.f);
-                
+                ImGui::ColorEdit4("##ParticleColor", glm::value_ptr(sceneParameters.particleColor));
                 // Particles colors presets
                 ImGui::NewLine();
                 if(ImGui::Button("Snow Preset"))
                 {
-                    rColor = 0.845f;
-                    bColor = 0.951f;
-                    gColor = 0.880f;
+                    sceneParameters.particleColor = glm::vec3(0.845f, 0.880f, 0.951f);
                 }
                 if(ImGui::Button("Default/Rain"))
                 {
-                    rColor = 0.f;
-                    bColor = 1.f;
-                    gColor = 0.f;
+                    sceneParameters.particleColor = glm::vec3(0.0f, 0.0f, 1.0f);
                 }
                 ImGui::NewLine();
                 
             }
 
+        }
+        lightParametersOpen = ImGui::CollapsingHeader("Light Parameters");
+        if(lightParametersOpen)
+        {
+            ImGui::Text("Light Direction:");
+            ImGui::SliderFloat3("##LightDir", glm::value_ptr(sceneParameters.lightDirection), -1.0f, 1.0f);
+            ImGui::Text("Light Color:");
+            ImGui::ColorEdit4("##LightColor", glm::value_ptr(sceneParameters.lightColor));
+            ImGui::Text("Light Intensity:");
+            ImGui::SliderFloat("##LightIntensity", &sceneParameters.lightIntensity, 0.0f, 10.0f);
         }
         ImGui::Spacing();
         ImGui::Text("FPS: %.1f", FPS);
@@ -264,8 +260,7 @@ int main()
         }
         #pragma endregion
 
-        particleColor = glm::vec3(rColor, gColor, bColor);
-        lScene.DrawScene(windowWidth, windowHeight, activeParticleCount, particleColor, isColorManual);
+        lScene.DrawScene(windowWidth, windowHeight, sceneParameters);
         ImGui::Render();
         
         #pragma region FPS Calculation

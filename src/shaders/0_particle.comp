@@ -98,6 +98,10 @@ void main()
     if(index >= uActiveParticleCount) return;
 
     Particle vParticle = particles[index];
+    if(uIsColorManual != 0)
+    {
+        vParticle.color = vec4(uParticleColor, 1.0);
+    }
     // https://gamedev.stackexchange.com/questions/8718/glsl-how-do-i-cast-a-float-to-an-int
     highp int intDeltatime = int(uDeltaTime * 1000.0); // Convert delta time to milliseconds
     uint seed = index * intDeltatime; // Create a seed based on index and delta time

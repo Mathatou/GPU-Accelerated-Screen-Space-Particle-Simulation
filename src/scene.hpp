@@ -8,6 +8,16 @@
 #include "particle.hpp"
 #include "camera.hpp"
 
+struct SceneParameters
+{
+    int activeParticleCount = 0;
+    bool isColorManual = false;
+    glm::vec3 particleColor{0.0f, 0.0f, 1.0f};
+    glm::vec3 lightDirection{-0.2f, -1.0f, -0.3f};
+    glm::vec4 lightColor{1.0f};
+    float lightIntensity = 1.0f;
+};
+
 class Scene
 {
     public:
@@ -46,7 +56,7 @@ class Scene
         /// @brief Draws the plane using its configured vertex array.
         void Draw3DPlane();
         /// @brief Updates particles and renders the complete scene.
-        void DrawScene(int windowWidth, int windowHeight, int pActiveParticleCount, glm::vec3 particleColor, bool isColorManual);
+        void DrawScene(int windowWidth, int windowHeight, const SceneParameters& parameters);
         
         Camera lCamera; // Camera object for view and projection matrices
 
