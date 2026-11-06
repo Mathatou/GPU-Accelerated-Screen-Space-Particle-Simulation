@@ -186,6 +186,7 @@ int main()
         }
         #pragma endregion
 
+        #pragma region ImGUI
         // (After event loop)
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -261,7 +262,7 @@ int main()
             ImGui::Text("ESC: Exit application");
             ImGui::End();
         }
-
+        #pragma endregion
 
         particleColor = glm::vec3(rColor, gColor, bColor);
         lScene.DrawScene(windowWidth, windowHeight, activeParticleCount, particleColor, isColorManual);

@@ -376,13 +376,21 @@ void Scene::DrawScene(int windowWidth, int windowHeight, int pActiveParticleCoun
     /// ====== SCENE SETUP  ======
     float TreeOffsetX = 3.2f;
     float TreeOffsetY = 1.f;
+    glm::vec3 lightDir = glm::normalize(glm::vec3(-0.5f, -1.0f, -0.3f));
+    glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    glm::vec3 lightPos = glm::vec3(5.0f, 5.0f, 5.0f);
+    float lightIntensity = 1.0f;
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(TreeOffsetX, TreeOffsetY, 0.0f));
-
+    
     // ====== GEOMETRY PASS ======
     geometryBuffer->bind();
     geometryProgram->use();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    geometryProgram->set3fv("uLightDir", glm::value_ptr(lightDir));
+    geometryProgram->set4fv("uLightColor", glm::value_ptr(lightColor));
+    // geometryProgram->set3fv("uLightPos", glm::value_ptr(lightPos));
+    geometryProgram->set1f("uLightIntensity", lightIntensity);
     geometryBuffer->drawBuffers({GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1});
     geometryProgram->setMatrix4fv("uView", glm::value_ptr(view));
     geometryProgram->setMatrix4fv("uProjection", glm::value_ptr(projection));
