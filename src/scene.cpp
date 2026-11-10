@@ -352,7 +352,6 @@ void Scene::DrawScene(int windowWidth, int windowHeight, const SceneParameters& 
     gParticleSSBO->bindBase(GL_SHADER_STORAGE_BUFFER, 0);
     computeProgram->use();
     // The compute shader uses this value to advance position and lifetime.
-    glUniform1f(glGetUniformLocation(computeProgram->getId(), "uDeltaTime"), 0.016f);
     const float deltaTime = 0.016f; // Assuming a fixed time step of 16ms (60 FPS)
     computeProgram->set1f("uDeltaTime",deltaTime);
     computeProgram->setMatrix4fv("uView",glm::value_ptr(view));

@@ -10,8 +10,8 @@
 #include <map>
 #include <algorithm>
 #pragma endregion
-#define WINDOW_WIDTH 1024
-#define WINDOW_HEIGHT 768
+#define WINDOW_WIDTH 1024*2
+#define WINDOW_HEIGHT 768*2
 #define MAX_PARTICLE_NUMBER 1000000
 
 #pragma region Application State

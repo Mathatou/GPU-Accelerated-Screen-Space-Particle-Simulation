@@ -10,7 +10,7 @@
 
 struct SceneParameters
 {
-    int activeParticleCount = 0;
+    int activeParticleCount = 1;
     bool isColorManual = false;
     glm::vec3 particleColor{0.0f, 0.0f, 1.0f};
     glm::vec3 lightDirection{-0.2f, -1.0f, -0.3f};
