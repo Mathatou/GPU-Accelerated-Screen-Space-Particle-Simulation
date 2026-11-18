@@ -65,7 +65,7 @@ void ResetParticle(inout Particle pParticle, inout uint seed)
         randomRange(seed, -15.0,  15.0),  // Random x position between -5 and 5
         randomRange(seed,  5.0,   10.0),  // Random y position between -5 and 5
         randomRange(seed, -15.0,  15.0),  // Random z position between -5 and 5
-        1.5                          // Reset lifetime to 1 second
+        randomRange(seed, 0.5, 2.5)                          // Reset lifetime to 1 second
     );
 
     pParticle.velocity_size = vec4(
