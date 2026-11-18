@@ -11,88 +11,96 @@ layout(location = 3) uniform vec3 uCameraPos;
 layout(location = 4) uniform vec3 F0;
 layout(location = 0)out vec4 outScreenColor;
 
-
 vec3 FresnelSchlick(vec3 pNormal, vec3 pIncidence, vec3 F0)
 {
-    return F0 + (1.0 - F0) * pow((1.0 - clamp(dot(pNormal, pIncidence), 0.0, 1.0)), 5.0);
+    float cosTheta = clamp(dot(pNormal, pIncidence), 0.0, 1.0);
+    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+bool IsOutsideScreen(vec2 pTexCoord)
+{
+    return pTexCoord.x < 0.0 || pTexCoord.x > 1.0 ||
+           pTexCoord.y < 0.0 || pTexCoord.y > 1.0;
+}
+
+vec3 ReconstructWorldPosition(vec2 pTexCoord, float pDepth)
+{
+    float zNDC = pDepth * 2.0 - 1.0;
+    vec4 clipPos = vec4(pTexCoord * 2.0 - 1.0, zNDC, 1.0);
+    vec4 worldPos = inverse(uProjection * uView) * clipPos;
+    return worldPos.xyz / worldPos.w;
+}
+
+void TraceReflection(vec3 pWorldPos, vec3 pRayDir,
+                     out vec4 pReflectionColor, out float pMixFactor)
+{
+    const float stepSize = 0.1;
+    const float thickness = 0.05;
+    const int maxSteps = 150;
+    const vec2 screenCenter = vec2(0.5);
+
+    pReflectionColor = vec4(0.0);
+    pMixFactor = 0.0;
+
+    vec3 currentRayPos = pWorldPos;
+
+    for(int i = 0; i < maxSteps; ++i)
+    {
+        currentRayPos += pRayDir * stepSize;
+
+        vec4 clipPos = uProjection * uView * vec4(currentRayPos, 1.0);
+        clipPos.xyz /= clipPos.w;
+
+        vec2 rayTexCoord = clipPos.xy * 0.5 + 0.5;
+        if(IsOutsideScreen(rayTexCoord))
+            break;
+
+        float edgeFade = smoothstep(0.5, 0.45,
+                                    distance(rayTexCoord, screenCenter));
+        float sampledDepth = texture(uDepthTex, rayTexCoord).r * 2.0 - 1.0;
+        float distanceFade = 1.0 - float(i) / float(maxSteps);
+
+        if(sampledDepth < clipPos.z &&
+           sampledDepth > clipPos.z - thickness)
+        {
+            pReflectionColor = texture(uColorTex, rayTexCoord);
+            pMixFactor = 0.85 * edgeFade * distanceFade;
+            break;
+        }
+    }
 }
 
 void main()
 {
-    
     vec4 baseColor = texture(uColorTex, vTexCoord);
     float depthValue = texture(uDepthTex, vTexCoord).r;
-    if(depthValue >= 1.0) // Assuming 1.0 indicates no geometry
+    if(depthValue >= 1.0)
     {
-        outScreenColor = baseColor; // Output the base color directly
+        outScreenColor = baseColor;
         return;
-    }    
-    // Convert depth from [0, 1] to [-1, 1]
-    float zNDC = depthValue * 2.0 - 1.0; // Assuming depth is stored in the red channel
-    vec4 clipSpacePos = vec4(vTexCoord*2.0 - 1.0, zNDC,1.0f); 
-    
-    vec4 worldPos4D = inverse(uProjection*uView)*clipSpacePos; 
-    vec3 worldPos = worldPos4D.xyz/ worldPos4D.w; // Perspective divide to get world position
+    }
+
+    vec3 worldPos = ReconstructWorldPosition(vTexCoord, depthValue);
+    vec4 normalData = texture(uNormalTex, vTexCoord);
+    vec3 surfaceNormal = normalize(normalData.xyz);
+    float roughness = normalData.a;
 
     vec3 incidence = normalize(worldPos - uCameraPos.xyz);
-    vec3 surfaceNormal = normalize(texture(uNormalTex,vTexCoord).xyz);
     vec3 viewDir = normalize(uCameraPos.xyz - worldPos);
     vec3 fresnel = FresnelSchlick(surfaceNormal, viewDir, F0);
     vec3 rayDir = reflect(incidence, surfaceNormal);
-    
-    float stepSize = 0.1; // Adjust step size as needed
-    float thickness = 0.05;
-    vec4 reflectionColor = vec4(0.0); 
-    float roughness = texture(uNormalTex, vTexCoord).a;
 
-    float mixFactor = 0;
-    float maxSteps = 150.0; // Maximum number of steps for ray marching
-    vec3 currentRayPos = worldPos; // Start from the current world position
-
-    float reflectionFactor = 0.0f;
-
-
-    if(roughness > 0.5) // Only perform ray marching for rough surfaces
+    if(roughness > 0.5)
     {
-        outScreenColor = baseColor; // Output the base color directly for rough surfaces
+        outScreenColor = baseColor;
         return;
     }
-    // With 300, fps drops to 30
-    // With 200, fps drops to ~45
-    for(int i = 0; i < maxSteps; ++i)
-    {
-        // Move the ray forward in the reflected direction
-        currentRayPos += rayDir * stepSize; // Adjust step size as needed
 
-        // Project the new world position back to clip space
-        vec4 newClipSpacePos = uProjection * uView * vec4(currentRayPos, 1.0);
-        newClipSpacePos.xyz /= newClipSpacePos.w; // Perspective divide
+    vec4 reflectionColor;
+    float mixFactor;
+    TraceReflection(worldPos, rayDir, reflectionColor, mixFactor);
 
-        // Convert to texture coordinates [0,1]
-        vec2 newTexCoord = newClipSpacePos.xy * 0.5 + 0.5;
-        // Check if the new texture coordinates are within bounds
-        if(newTexCoord.x < 0.0 || newTexCoord.x > 1.0 || newTexCoord.y < 0.0 || newTexCoord.y > 1.0)
-            break; // Exit if out of bounds
-        
-        vec2 centerOfScreen = vec2(0.5, 0.5);
-
-        float distanceToCenter = distance(newTexCoord, centerOfScreen);
-        float edgeFade = smoothstep(0.5, 0.45, distanceToCenter); // Adjust the fade range as needed
-        
-        // Sample the depth at the new texture coordinates
-        // Convert to [-1, 1]
-        float sampledDepth = texture(uDepthTex, newTexCoord).r *2.0 - 1.0; 
-
-        float distanceFade = clamp(1.0 - float(i)/maxSteps,0,1.0); // Fade based on distance traveled along the ray
-        // If the new depth is less than the current depth, we hit a surface
-        if(sampledDepth < newClipSpacePos.z && sampledDepth > newClipSpacePos.z - thickness)
-        {
-            reflectionColor = texture(uColorTex, newTexCoord);
-            mixFactor = 0.85*edgeFade*distanceFade;
-            break;
-        }
-    }
-    reflectionFactor = fresnel.r * mixFactor * (1.0 - roughness); // Combine Fresnel effect, mix factor, and roughness
-    // If no surface was hit, output a default color (e.g., black)
-    outScreenColor = mix(baseColor, reflectionColor, reflectionFactor); // Blend the reflection with the base color
+    float reflectionFactor =
+        fresnel.r * mixFactor * (1.0 - roughness);
+    outScreenColor = mix(baseColor, reflectionColor, reflectionFactor);
 }
