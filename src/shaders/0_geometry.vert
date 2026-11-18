@@ -1,7 +1,7 @@
 #version 450
 in layout(location = 0) vec3 inPosition;
 in layout(location = 1) vec3 inNormal;
-
+uniform mat4 uLightSpaceMatrix;
 uniform mat4 uModel;
 uniform mat4 uView;
 uniform mat4 uProjection;
@@ -9,6 +9,7 @@ uniform bool bIsWater;
 uniform float iTime; 
 out vec3 vNormal;
 out vec4 worldPosition;
+out vec4 vertPosLightSpace;
 
 void main()
 {
@@ -29,6 +30,6 @@ void main()
         mat3 normalMatrix = transpose(inverse(mat3(uModel)));
         vNormal = normalize(normalMatrix * inNormal);
     }
-
+    vertPosLightSpace = vec4(vec3(uLightSpaceMatrix * worldPosition), 1.0);
     gl_Position = uProjection * uView * worldPosition;
 }

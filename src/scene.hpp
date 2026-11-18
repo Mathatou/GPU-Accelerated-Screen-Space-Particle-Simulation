@@ -81,17 +81,20 @@ class Scene
         std::shared_ptr<ge::gl::Framebuffer> geometryBuffer;
         std::shared_ptr<ge::gl::Texture> normalTexture;
         std::shared_ptr<ge::gl::Texture> depthTexture;
+        std::shared_ptr<ge::gl::Texture> ShadowMapTexture;
         std::shared_ptr<ge::gl::Texture> colorTexture;
         std::shared_ptr<ge::gl::Program> geometryProgram;
         std::shared_ptr<ge::gl::Program> displayProgram;
         std::shared_ptr<ge::gl::Program> computeProgram;
         std::shared_ptr<ge::gl::Program> particleProgram;
+        std::shared_ptr<ge::gl::Program> shadowProgram;
         std::shared_ptr<ge::gl::Buffer> gParticleSSBO; // Shader Storage Buffer Object for particles
         std::shared_ptr<ge::gl::Buffer> cubeVBO;
         std::shared_ptr<ge::gl::Buffer> planeVBO;
         std::shared_ptr<ge::gl::VertexArray> cubeVAO;
         std::shared_ptr<ge::gl::VertexArray> planeVAO;
         std::shared_ptr<ge::gl::VertexArray> emptyVAO;
+        std::shared_ptr<ge::gl::Framebuffer> depthMapFBO;
         /// @brief Loads a shader source file from the configured shader directory.
         std::string LoadShader(const std::string& fileName);
 

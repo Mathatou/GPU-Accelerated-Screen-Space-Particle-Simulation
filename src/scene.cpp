@@ -65,6 +65,20 @@ void Scene::Initialise(SDL_Window** pPWindow, SDL_GLContext* pPCtx,
     initTextureAndAttach(geometryBuffer, normalTexture, GL_TEXTURE_2D, GL_RGBA16F, width, height, GL_COLOR_ATTACHMENT1);
     initTextureAndAttach(geometryBuffer, depthTexture, GL_TEXTURE_2D, GL_DEPTH_COMPONENT32, width, height, GL_DEPTH_ATTACHMENT);
 
+    // Create a separate framebuffer for the depth map used in shadow mapping.
+    depthMapFBO = std::make_shared<Framebuffer>();
+    initTextureAndAttach(depthMapFBO, ShadowMapTexture, GL_TEXTURE_2D, GL_DEPTH_COMPONENT32, 2048, 2048, GL_DEPTH_ATTACHMENT);
+    glTextureParameteri(ShadowMapTexture->getId(), GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureParameteri(ShadowMapTexture->getId(), GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glTextureParameterfv(ShadowMapTexture->getId(), GL_TEXTURE_BORDER_COLOR, borderColor);
+    glTextureParameteri(ShadowMapTexture->getId(), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTextureParameteri(ShadowMapTexture->getId(), GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+    shadowProgram = std::make_shared<Program>(
+        std::make_shared<Shader>(GL_VERTEX_SHADER, LoadShader("shadow.vert")),
+        std::make_shared<Shader>(GL_FRAGMENT_SHADER, LoadShader("shadow.frag"))
+        );
     geometryProgram = std::make_shared<Program>(
         std::make_shared<Shader>(GL_VERTEX_SHADER, LoadShader("0_geometry.vert")),
         std::make_shared<Shader>(GL_FRAGMENT_SHADER, LoadShader("0_geometry.frag"))
@@ -115,9 +129,11 @@ void Scene::onResize(int height, int width)
 void Scene::Cleanup(SDL_Window* pWindow, SDL_GLContext pCtx)
 {
     geometryBuffer.reset();
+    depthMapFBO.reset();
     colorTexture.reset();
     normalTexture.reset();
     depthTexture.reset();
+    ShadowMapTexture.reset();
     SDL_GL_DestroyContext(pCtx);
     SDL_DestroyWindow(pWindow);
 }
@@ -344,6 +360,76 @@ void Scene::DrawScene(int windowWidth, int windowHeight, const SceneParameters& 
     const glm::mat4 projection = glm::perspective(glm::radians(45.0f),
         static_cast<float>(windowWidth) / static_cast<float>(windowHeight), 0.1f, 100.0f);
 
+    // ====== LIGHT PASS ======    
+    depthMapFBO->bind();
+    depthMapFBO->drawBuffers(GL_NONE);
+    shadowProgram->use();
+    glViewport(0, 0, 2048, 2048);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    const glm::vec3 lightDir = glm::length(parameters.lightDirection) > 0.0001f
+        ? glm::normalize(parameters.lightDirection)
+        : glm::vec3(0.0f, -1.0f, 0.0f);
+    glm::vec3 sceneCenter = glm::vec3(0.0f,0.0f,0.0f);    
+    glm::vec3 lightPos = sceneCenter - lightDir * 25.0f; // Position the light source away from the scene center
+
+    glm::mat4 lightView = glm::lookAt(lightPos, 
+        sceneCenter, 
+        glm::vec3(0.0f, 1.0f, 0.0f)
+    );
+    float orthoSize = 20.0f; // Adjust this value based on the scene size
+    glm::mat4 orthographicProjectionMatrix = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, 0.1f, 50.0f);
+    glm::mat4 lightSpaceMatrix = orthographicProjectionMatrix * lightView;
+    shadowProgram->setMatrix4fv("uLightSpaceMatrix", glm::value_ptr(lightSpaceMatrix));
+    
+    float TreeOffsetX = 3.2f;
+    float TreeOffsetY = 1.f;
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(TreeOffsetX, TreeOffsetY, 0.0f));
+    
+    /// Trunk
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 0.0f-TreeOffsetY, 0.0f));
+    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 2.0f-TreeOffsetY, 0.0f));
+    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    
+    /// Leaves
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX + 2.0f, 2.0f-TreeOffsetY, 0.0f));
+    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f+TreeOffsetX, 2.0f-TreeOffsetY, 0.0f));
+    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 2.0f-TreeOffsetY, 2.0f));
+    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 2.0f-TreeOffsetY, -2.0f));
+    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 4.0f-TreeOffsetY, 0.0f));
+    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+
+    /// Water plane
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.7f, 0.7f));
+    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DPlane();
+
+    /// Ground plane
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(-7.0f, .0f, 0.7f));
+    model = glm::scale(model, glm::vec3(.50f, 2.5f, 1.1f));
+    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DPlane();
+
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(7.0f, .0f, 0.7f));
+    model = glm::scale(model, glm::vec3(.50f, 2.5f, 1.1f));
+    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DPlane();
+
+    depthMapFBO->unbind();
+    glViewport(0, 0, windowWidth, windowHeight);
     // ====== PARTICLE COMPUTE PASS ======
     gParticleSSBO->bindBase(GL_SHADER_STORAGE_BUFFER, 0);
     computeProgram->use();
@@ -369,18 +455,17 @@ void Scene::DrawScene(int windowWidth, int windowHeight, const SceneParameters& 
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     /// ====== SCENE SETUP  ======
-    float TreeOffsetX = 3.2f;
-    float TreeOffsetY = 1.f;
-    const glm::vec3 lightDir = glm::length(parameters.lightDirection) > 0.0001f
-        ? glm::normalize(parameters.lightDirection)
-        : glm::vec3(0.0f, -1.0f, 0.0f);
-    glm::mat4 model = glm::mat4(1.0f);
+    TreeOffsetX = 3.2f;
+    TreeOffsetY = 1.f;
+    // glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(TreeOffsetX, TreeOffsetY, 0.0f));
     
     // ====== GEOMETRY PASS ======
     geometryBuffer->bind();
     geometryProgram->use();
+    ShadowMapTexture->bind(3);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    geometryProgram->setMatrix4fv("uLightSpaceMatrix", glm::value_ptr(lightSpaceMatrix));
     geometryProgram->set3fv("uLightDir", glm::value_ptr(lightDir));
     geometryProgram->set4fv("uLightColor", glm::value_ptr(parameters.lightColor));
     geometryProgram->set1f("uLightIntensity", parameters.lightIntensity);
@@ -466,5 +551,10 @@ void Scene::DrawScene(int windowWidth, int windowHeight, const SceneParameters& 
 
 
     #pragma endregion
+    
+}
+
+void drawGeometry()
+{
     
 }
