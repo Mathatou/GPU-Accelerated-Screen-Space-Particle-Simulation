@@ -234,6 +234,13 @@ int main()
             ImGui::ColorEdit4("##LightColor", glm::value_ptr(sceneParameters.lightColor));
             ImGui::Text("Light Intensity:");
             ImGui::SliderFloat("##LightIntensity", &sceneParameters.lightIntensity, 0.0f, 10.0f);
+
+            if(ImGui::Button("Reset Light Parameters"))
+            {
+                sceneParameters.lightDirection = glm::vec3(0.0f, -0.417f, 0.683f);
+                sceneParameters.lightColor = glm::vec4(1.0f);
+                sceneParameters.lightIntensity = 1.0f;
+            }
         }
         ImGui::Spacing();
         ImGui::Text("FPS: %.1f", FPS);
