@@ -74,19 +74,7 @@ void ResetParticle(inout Particle pParticle, inout uint seed)
         0,  // Random z velocity between -1 and 1
         randomRange(seed, 0.1, 0.3) * 10.0  // Random size between 1 and 3
     );
-    if(uIsColorManual == 0)
-    {
-        pParticle.color = vec4(
-        0,                 // Random red component (0.0 to 1.0)
-        0,                 // Random green component (0.0 to 1.0)
-        randomFloat(seed)*0.5 + 0.5, // Random blue component (0.5 to 1.0)
-        1.0                // Full opacity
-    );
-    }
-    else
-    {
-        pParticle.color = vec4(uParticleColor,1.0);
-    }
+    pParticle.color = vec4(uParticleColor, 1.0);
     
 }
 

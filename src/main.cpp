@@ -209,7 +209,7 @@ int main()
             ImGui::Checkbox("Manual Color", &sceneParameters.isColorManual);
             if(sceneParameters.isColorManual)
             {
-                ImGui::ColorEdit4("##ParticleColor", glm::value_ptr(sceneParameters.particleColor));
+                ImGui::ColorEdit3("##ParticleColor", glm::value_ptr(sceneParameters.particleColor));
                 // Particles colors presets
                 ImGui::NewLine();
                 if(ImGui::Button("Snow Preset"))
@@ -218,7 +218,7 @@ int main()
                 }
                 if(ImGui::Button("Default/Rain"))
                 {
-                    sceneParameters.particleColor = glm::vec3(0.0f, 0.0f, 1.0f);
+                    sceneParameters.particleColor = glm::vec3(95/255.0f, 166/255.0f, 238/255.0f);
                 }
                 ImGui::NewLine();
                 
