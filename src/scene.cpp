@@ -116,6 +116,80 @@ void Scene::initTextureAndAttach(std::shared_ptr<Framebuffer>& framebuffer,
     framebuffer->attachTexture(attachment, texture.get());
 }
 
+void Scene::DrawGeometry(ge::gl::Program &pProgram, bool pSendUniforms)
+{
+
+    float TreeOffsetX = 3.2f;
+    float TreeOffsetY = 1.f;
+    glm::mat4 model = glm::mat4(1.0f);
+
+    /// Trunk
+    if(pSendUniforms)
+    {
+        pProgram.set4fv("uColor", glm::value_ptr(glm::vec4(0.55, 0.27, 0.07, 1.0)));
+        pProgram.set1i("bIsWater", false);
+        pProgram.set1f("uRoughness", 0.85f); // Set roughness for the cube
+    }
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 0.0f-TreeOffsetY, 0.0f));
+    pProgram.setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 2.0f-TreeOffsetY, 0.0f));
+    pProgram.setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    
+    /// Leaves
+    if(pSendUniforms)
+    {
+        pProgram.set1f("uRoughness", 0.75f); // Set roughness for the cube
+        pProgram.set4fv("uColor", glm::value_ptr(glm::vec4(0.11, 0.32, 0.22, 1.0)));
+    }
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX + 2.0f, 2.0f-TreeOffsetY, 0.0f));
+    pProgram.setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f+TreeOffsetX, 2.0f-TreeOffsetY, 0.0f));
+    pProgram.setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 2.0f-TreeOffsetY, 2.0f));
+    pProgram.setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 2.0f-TreeOffsetY, -2.0f));
+    pProgram.setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 4.0f-TreeOffsetY, 0.0f));
+    pProgram.setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DCube();
+
+    /// Water plane
+    if(pSendUniforms)
+    {
+        // rgb(169, 225, 253)
+        pProgram.set4fv("uColor", glm::value_ptr(glm::vec4(0.66, 0.88, 1.0, 1.0)));
+        pProgram.set1i("bIsWater", true);
+        pProgram.set1f("uRoughness", 0.05f); // Set roughness for the plane
+        pProgram.set1f("iTime", GetTime());
+    }
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.7f, 0.7f));
+    pProgram.setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DPlane();
+
+    /// Ground plane
+    if(pSendUniforms)
+    {
+        // rgb(143, 105, 35)
+        pProgram.set4fv("uColor", glm::value_ptr(glm::vec4(0.56, 0.41, 0.14, 1.0)));
+        pProgram.set1i("bIsWater", false);
+        pProgram.set1f("uRoughness", 0.9f); // Set roughness for the plane
+    }
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(-7.0f, .0f, 0.7f));
+    model = glm::scale(model, glm::vec3(.50f, 2.5f, 1.1f));
+    pProgram.setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DPlane();
+
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(7.0f, .0f, 0.7f));
+    model = glm::scale(model, glm::vec3(.50f, 2.5f, 1.1f));
+    pProgram.setMatrix4fv("uModel", glm::value_ptr(model));
+    Draw3DPlane();
+}
 
 void Scene::onResize(int height, int width)
 {
@@ -360,7 +434,7 @@ void Scene::DrawScene(int windowWidth, int windowHeight, const SceneParameters& 
     const glm::mat4 projection = glm::perspective(glm::radians(45.0f),
         static_cast<float>(windowWidth) / static_cast<float>(windowHeight), 0.1f, 100.0f);
 
-    // ====== LIGHT PASS ======    
+    // ====== DEPTH PASS ======    
     depthMapFBO->bind();
     depthMapFBO->drawBuffers(GL_NONE);
     shadowProgram->use();
@@ -381,55 +455,11 @@ void Scene::DrawScene(int windowWidth, int windowHeight, const SceneParameters& 
     glm::mat4 orthographicProjectionMatrix = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, 0.1f, 50.0f);
     glm::mat4 lightSpaceMatrix = orthographicProjectionMatrix * lightView;
     shadowProgram->setMatrix4fv("uLightSpaceMatrix", glm::value_ptr(lightSpaceMatrix));
-    
-    float TreeOffsetX = 3.2f;
-    float TreeOffsetY = 1.f;
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(TreeOffsetX, TreeOffsetY, 0.0f));
-    
-    /// Trunk
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 0.0f-TreeOffsetY, 0.0f));
-    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DCube();
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 2.0f-TreeOffsetY, 0.0f));
-    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DCube();
-    
-    /// Leaves
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX + 2.0f, 2.0f-TreeOffsetY, 0.0f));
-    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DCube();
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f+TreeOffsetX, 2.0f-TreeOffsetY, 0.0f));
-    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DCube();
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 2.0f-TreeOffsetY, 2.0f));
-    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DCube();
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 2.0f-TreeOffsetY, -2.0f));
-    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DCube();
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 4.0f-TreeOffsetY, 0.0f));
-    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DCube();
-
-    /// Water plane
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.7f, 0.7f));
-    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DPlane();
-
-    /// Ground plane
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(-7.0f, .0f, 0.7f));
-    model = glm::scale(model, glm::vec3(.50f, 2.5f, 1.1f));
-    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DPlane();
-
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(7.0f, .0f, 0.7f));
-    model = glm::scale(model, glm::vec3(.50f, 2.5f, 1.1f));
-    shadowProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DPlane();
-
+    // Inside depth pass, we only need to render the geometry to the depth buffer, so we don't need to send color information.
+    DrawGeometry(*shadowProgram);
     depthMapFBO->unbind();
     glViewport(0, 0, windowWidth, windowHeight);
+
     // ====== PARTICLE COMPUTE PASS ======
     gParticleSSBO->bindBase(GL_SHADER_STORAGE_BUFFER, 0);
     computeProgram->use();
@@ -454,11 +484,6 @@ void Scene::DrawScene(int windowWidth, int windowHeight, const SceneParameters& 
     
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    /// ====== SCENE SETUP  ======
-    TreeOffsetX = 3.2f;
-    TreeOffsetY = 1.f;
-    // glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(TreeOffsetX, TreeOffsetY, 0.0f));
     
     // ====== GEOMETRY PASS ======
     geometryBuffer->bind();
@@ -473,62 +498,8 @@ void Scene::DrawScene(int windowWidth, int windowHeight, const SceneParameters& 
     geometryProgram->setMatrix4fv("uView", glm::value_ptr(view));
     geometryProgram->setMatrix4fv("uProjection", glm::value_ptr(projection));
     geometryProgram->set3fv("uCameraPos", glm::value_ptr(lCamera.GetPosition()));
-    geometryProgram->set1i("bIsWater", false);
 
-    /// Trunk
-    geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.55, 0.27, 0.07, 1.0)));
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 0.0f-TreeOffsetY, 0.0f));
-    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    geometryProgram->set1f("uRoughness", 0.85f); // Set roughness for the cube
-    Draw3DCube();
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 2.0f-TreeOffsetY, 0.0f));
-    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DCube();
-    
-    /// Leaves
-    geometryProgram->set1f("uRoughness", 0.75f); // Set roughness for the cube
-    geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.11, 0.32, 0.22, 1.0)));
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX + 2.0f, 2.0f-TreeOffsetY, 0.0f));
-    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DCube();
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f+TreeOffsetX, 2.0f-TreeOffsetY, 0.0f));
-    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DCube();
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 2.0f-TreeOffsetY, 2.0f));
-    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DCube();
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 2.0f-TreeOffsetY, -2.0f));
-    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DCube();
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(TreeOffsetX, 4.0f-TreeOffsetY, 0.0f));
-    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DCube();
-
-    /// Water plane
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.7f, 0.7f));
-    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    // rgb(169, 225, 253)
-    geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.66, 0.88, 1.0, 1.0)));
-    geometryProgram->set1i("bIsWater", true);
-    geometryProgram->set1f("iTime", GetTime());
-    geometryProgram->set1f("uRoughness", 0.05f); // Set roughness for the plane
-    Draw3DPlane();
-
-    /// Ground plane
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(-7.0f, .0f, 0.7f));
-    model = glm::scale(model, glm::vec3(.50f, 2.5f, 1.1f));
-    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    // rgb(143, 105, 35)
-    geometryProgram->set4fv("uColor", glm::value_ptr(glm::vec4(0.56, 0.41, 0.14, 1.0)));
-    geometryProgram->set1i("bIsWater", false);
-    geometryProgram->set1f("uRoughness", 0.9f); // Set roughness for the plane
-    Draw3DPlane();
-
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(7.0f, .0f, 0.7f));
-    model = glm::scale(model, glm::vec3(.50f, 2.5f, 1.1f));
-    geometryProgram->setMatrix4fv("uModel", glm::value_ptr(model));
-    Draw3DPlane();
-    
+    DrawGeometry(*geometryProgram,true);
     geometryBuffer->unbind();
 
     // ====== DISPLAY PASS ======
@@ -545,16 +516,11 @@ void Scene::DrawScene(int windowWidth, int windowHeight, const SceneParameters& 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     emptyVAO->unbind();
     
-    model = glm::mat4(1.0f);
+    glm::mat4 model = glm::mat4(1.0f);
     
     DrawParticles(view, projection, model, parameters.activeParticleCount);
 
 
     #pragma endregion
-    
-}
-
-void drawGeometry()
-{
     
 }

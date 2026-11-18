@@ -75,6 +75,7 @@ class Scene
         {
             return static_cast<float>(SDL_GetTicks()) / 1000.0f; // Convert milliseconds to seconds
         }
+        void DrawGeometry(ge::gl::Program& pProgram, bool pSendUniforms = false);
 
         bool bIsSceneInitialized = false;
         const std::string shaderFolder = "../src/shaders/";
