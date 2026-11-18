@@ -387,6 +387,7 @@ void Scene::DrawScene(int windowWidth, int windowHeight, const SceneParameters& 
     geometryBuffer->drawBuffers({GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1});
     geometryProgram->setMatrix4fv("uView", glm::value_ptr(view));
     geometryProgram->setMatrix4fv("uProjection", glm::value_ptr(projection));
+    geometryProgram->set3fv("uCameraPos", glm::value_ptr(lCamera.GetPosition()));
     geometryProgram->set1i("bIsWater", false);
 
     /// Trunk

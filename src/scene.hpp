@@ -14,7 +14,7 @@ struct SceneParameters
     bool isColorManual = false;
     // rgb(95,166,238) in normalized float values 
     glm::vec3 particleColor{95/255.0f, 166/255.0f, 238/255.0f};
-    glm::vec3 lightDirection{-0.2f, -1.0f, -0.3f};
+    glm::vec3 lightDirection{0.0f, -0.417f, 0.683f};
     glm::vec4 lightColor{1.0f};
     float lightIntensity = 1.0f;
 };

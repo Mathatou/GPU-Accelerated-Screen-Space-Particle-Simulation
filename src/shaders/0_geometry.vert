@@ -8,11 +8,11 @@ uniform mat4 uProjection;
 uniform bool bIsWater; 
 uniform float iTime; 
 out vec3 vNormal;
-
+out vec4 worldPosition;
 
 void main()
 {
-    vec4 worldPosition = uModel * vec4(inPosition, 1.0);
+    worldPosition = uModel * vec4(inPosition, 1.0);
     if(bIsWater)
     {
         const float wave1Amplitude = 0.03;
