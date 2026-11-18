@@ -46,11 +46,20 @@ void main()
     float roughness = texture(uNormalTex, vTexCoord).a;
 
     float mixFactor = 0;
-
+    float maxSteps = 150.0; // Maximum number of steps for ray marching
     vec3 currentRayPos = worldPos; // Start from the current world position
-    // With 300 fps drops to 30
-    // 200 fps drops to ~45
-    for(int i = 0; i < 150; ++i)
+
+    float reflectionFactor = 0.0f;
+
+
+    if(roughness > 0.5) // Only perform ray marching for rough surfaces
+    {
+        outScreenColor = baseColor; // Output the base color directly for rough surfaces
+        return;
+    }
+    // With 300, fps drops to 30
+    // With 200, fps drops to ~45
+    for(int i = 0; i < maxSteps; ++i)
     {
         // Move the ray forward in the reflected direction
         currentRayPos += rayDir * stepSize; // Adjust step size as needed
@@ -74,18 +83,16 @@ void main()
         // Convert to [-1, 1]
         float sampledDepth = texture(uDepthTex, newTexCoord).r *2.0 - 1.0; 
 
-        float distanceFade = 1.0 - float(i)/100.0f;
+        float distanceFade = clamp(1.0 - float(i)/maxSteps,0,1.0); // Fade based on distance traveled along the ray
         // If the new depth is less than the current depth, we hit a surface
         if(sampledDepth < newClipSpacePos.z && sampledDepth > newClipSpacePos.z - thickness)
         {
             reflectionColor = texture(uColorTex, newTexCoord);
-            reflectionColor*= 1.0 - roughness;
             mixFactor = 0.85*edgeFade*distanceFade;
             break;
         }
     }
-    float reflectionFactor = fresnel.r * mixFactor;
-            
+    reflectionFactor = fresnel.r * mixFactor * (1.0 - roughness); // Combine Fresnel effect, mix factor, and roughness
     // If no surface was hit, output a default color (e.g., black)
     outScreenColor = mix(baseColor, reflectionColor, reflectionFactor); // Blend the reflection with the base color
 }
