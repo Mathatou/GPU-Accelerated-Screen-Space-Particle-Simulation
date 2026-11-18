@@ -15,10 +15,41 @@ uniform float uLightIntensity;
 
 layout(binding = 3) uniform sampler2D uShadowMap;
 
+float CalculateShadowPCF(vec3 pPosLightSpace, vec3 pNormal, vec3 pLightDir)
+{
+    float shadow = 0.0;
+    vec3 projectedPosition = pPosLightSpace * 0.5 + 0.5;
+
+    if(projectedPosition.z < 0.0)
+        return 0.0;
+
+    if(projectedPosition.z > 1.0)
+        return 0.0;
+
+    vec2 texelSize = 1.0 / textureSize(uShadowMap, 0);
+    float bias = max(
+        0.05 * (1.0 - dot(pNormal, pLightDir)),
+        0.005
+    );
+    for(int x = -1; x <= 1; ++x)
+    {
+        for(int y = -1; y <= 1; ++y)
+        {
+            vec2 offset = vec2(float(x), float(y)) * texelSize;
+            float closestDepth = texture(uShadowMap, projectedPosition.xy + offset).r;
+            shadow += (projectedPosition.z - bias > closestDepth) ? 1.0 : 0.0;
+        }
+    }
+
+    return clamp(shadow / 9.0, 0.0, 1.0);
+}
+
 float CalculateShadow(vec3 pPosLightSpace, vec3 pNormal, vec3 pLightDir)
 {
     vec3 projectedPosition = pPosLightSpace * 0.5 + 0.5;
 
+    if(projectedPosition.z < 0.0)
+        return 0.0;
     if(projectedPosition.z > 1.0)
         return 0.0;
 
@@ -36,7 +67,7 @@ void main()
     vec3 normal = normalize(vNormal);
     vec3 lightDir = -normalize(uLightDir);
 
-    float shadow = CalculateShadow(
+    float shadow = CalculateShadowPCF(
         vertPosLightSpace.xyz,
         normal,
         lightDir

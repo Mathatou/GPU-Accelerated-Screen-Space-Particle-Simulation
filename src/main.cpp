@@ -237,7 +237,7 @@ int main()
 
             if(ImGui::Button("Reset Light Parameters"))
             {
-                sceneParameters.lightDirection = glm::vec3(0.0f, -0.417f, 0.683f);
+                sceneParameters.lightDirection = glm::vec3(1.0f, -1.0f, 0.6f);
                 sceneParameters.lightColor = glm::vec4(1.0f);
                 sceneParameters.lightIntensity = 1.0f;
             }
