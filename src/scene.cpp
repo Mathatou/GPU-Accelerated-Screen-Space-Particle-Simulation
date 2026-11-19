@@ -68,8 +68,10 @@ void Scene::Initialise(SDL_Window** pPWindow, SDL_GLContext* pPCtx,
     // Create a separate framebuffer for the depth map used in shadow mapping.
     depthMapFBO = std::make_shared<Framebuffer>();
     initTextureAndAttach(depthMapFBO, ShadowMapTexture, GL_TEXTURE_2D, GL_DEPTH_COMPONENT32, 2048, 2048, GL_DEPTH_ATTACHMENT);
-    glTextureParameteri(ShadowMapTexture->getId(), GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTextureParameteri(ShadowMapTexture->getId(), GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureParameteri(ShadowMapTexture->getId(), GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTextureParameteri(ShadowMapTexture->getId(), GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTextureParameteri(ShadowMapTexture->getId(), GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+    glTextureParameteri(ShadowMapTexture->getId(), GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
     float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     glTextureParameterfv(ShadowMapTexture->getId(), GL_TEXTURE_BORDER_COLOR, borderColor);
     glTextureParameteri(ShadowMapTexture->getId(), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
