@@ -49,7 +49,7 @@ float CalculateShadowPCF(vec3 pPosLightSpace, vec3 pNormal, vec3 pLightDir, floa
     mat2 rot = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
     float spread = 2.5;
     
-    for (int i=0;i<sampleNumber;i++)
+    for (int i=0;i<sampleNumber;++i)
     {
         vec2 offset = rot * poissonDisk[i] * texelSize * spread;
         visibility = texture(uShadowMap, vec3(projectedPosition.xy + offset, projectedPosition.z-bias))   ;
