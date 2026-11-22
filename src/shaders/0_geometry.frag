@@ -36,8 +36,8 @@ float CalculateShadowPCF(vec3 pPosLightSpace, vec3 pNormal, vec3 pLightDir)
         for(int y = -1; y <= 1; ++y)
         {
             vec2 offset = vec2(float(x), float(y)) * texelSize;
-            float closestDepth = texture(uShadowMap, vec3(projectedPosition.xy + offset, projectedPosition.z-bias));
-            shadow += 1-closestDepth;
+            float visibility = texture(uShadowMap, vec3(projectedPosition.xy + offset, projectedPosition.z-bias));
+            shadow += 1-visibility;
         }
     }
 
