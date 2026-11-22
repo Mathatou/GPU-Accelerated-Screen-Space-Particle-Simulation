@@ -31,42 +31,77 @@ vec3 ReconstructWorldPosition(vec2 pTexCoord, float pDepth)
     return worldPos.xyz / worldPos.w;
 }
 
+
+vec3 ProjectToNDC(vec3 pWorldPos)
+{
+    vec4 clipPos = uProjection * uView * vec4(pWorldPos, 1.0);
+    clipPos.xyz /= clipPos.w;
+    return vec3(clipPos.xy * 0.5 + 0.5, clipPos.z);
+}
+
+vec2 RefineRayHit(vec3 pFrontPos, vec3 pBackPos)
+{
+    vec2 refinedUV = vec2(0.0);
+    for(int j = 0; j < 5; ++j)
+    {
+        vec3 midPoint = (pFrontPos + pBackPos) * 0.5;
+        vec3 midNDC = ProjectToNDC(midPoint);
+        vec2 midTexCoord = midNDC.xy;
+        refinedUV = midTexCoord;
+        if(IsOutsideScreen(midTexCoord))
+            break;
+        float midSampledDepth = texture(uDepthTex, midTexCoord).r * 2.0 - 1.0;
+
+        if(midSampledDepth < midNDC.z)
+        {
+            // Behind the surface, move the back position to the midpoint
+            pBackPos = midPoint;
+        }
+        else
+        {
+            // In front of the surface, move the front position to the midpoint
+            pFrontPos = midPoint;
+        }
+    }
+    return refinedUV;
+}
+
+
 void TraceReflection(vec3 pWorldPos, vec3 pRayDir,
                      out vec4 pReflectionColor, out float pMixFactor)
 {
-    const float stepSize = 0.1;
-    const float thickness = 0.05;
-    const int maxSteps = 150;
+    const float stepSize = 0.2;
+    const float thickness = 0.08;
+    const float maxSteps = 20/ stepSize;
     const vec2 screenCenter = vec2(0.5);
 
     pReflectionColor = vec4(0.0);
     pMixFactor = 0.0;
 
-    vec3 currentRayPos = pWorldPos;
-
-    for(int i = 0; i < maxSteps; ++i)
+    float jitter = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+    vec3 currentRayPos = pWorldPos + pRayDir * jitter * stepSize;
+    vec3 prevRayPos = pWorldPos;
+    for(int i = 0; i < int(maxSteps); ++i)
     {
         currentRayPos += pRayDir * stepSize;
-
-        vec4 clipPos = uProjection * uView * vec4(currentRayPos, 1.0);
-        clipPos.xyz /= clipPos.w;
-
-        vec2 rayTexCoord = clipPos.xy * 0.5 + 0.5;
+        vec3 currentNDC = ProjectToNDC(currentRayPos);
+        vec2 rayTexCoord = currentNDC.xy ;
         if(IsOutsideScreen(rayTexCoord))
             break;
 
-        float edgeFade = smoothstep(0.5, 0.45,
-                                    distance(rayTexCoord, screenCenter));
         float sampledDepth = texture(uDepthTex, rayTexCoord).r * 2.0 - 1.0;
-        float distanceFade = 1.0 - float(i) / float(maxSteps);
-
-        if(sampledDepth < clipPos.z &&
-           sampledDepth > clipPos.z - thickness)
+        
+        if(sampledDepth < currentNDC.z &&
+           sampledDepth > currentNDC.z - thickness)
         {
-            pReflectionColor = texture(uColorTex, rayTexCoord);
+            vec2 hitUV = RefineRayHit(prevRayPos, currentRayPos);
+            float edgeFade = smoothstep(0.5, 0.45, distance(hitUV, screenCenter));
+            float distanceFade = 1.0 - float(i) / float(maxSteps);
+            pReflectionColor = texture(uColorTex, hitUV);
             pMixFactor = 0.85 * edgeFade * distanceFade;
             break;
         }
+        prevRayPos = currentRayPos;
     }
 }
 
